@@ -110,6 +110,29 @@ class SinglyLinkedList:
         # 新しいノードの next を temp にします。
         node.next = temp
 
+    # ソート済みの連結リストの正しい位置に挿入するメソッド
+    def insertNodeInSorted(self, data):
+        # 先頭に挿入する場合とそれ以外の場合で場合分けが必要だが、ダミーのノードを先頭に追加することにより場合分けを回避。
+        # ダミーのノードを作り、head の前に挿入しておきます。
+        dummyNode = Node(None)
+        dummyNode.next = self.head
+        # iterator にダミーノードを入れます。
+        iterator = dummyNode
+        # 挿入すべき位置までリストを走査します。
+        while iterator.next != None and iterator.next.data < data :
+            iterator = iterator.next
+
+        # 新しいノードを作ります。
+        node = Node(data)
+        # iterator.nextをtempに入れ保管します。
+        temp = iterator.next
+        # iterator.nextには新しいノードを入れます。
+        iterator.next = node
+        # tempに入れていた参照を新しいノードのnextにします。
+        node.next = temp
+        # ダミーのノードをポップします。
+        # self.popFront()
+
     # リストの先頭の要素をポップするメソッド O(1)
     def popFront(self):
         self.head = self.head.next
@@ -178,6 +201,19 @@ class SinglyLinkedList:
             iterator = iterator.next
         return iterator.data
 
+    # # 連結リストの長さを n 倍にするメソッド
+    # def reproduceByN(self,n):
+    #     empty_Node = SinglyLinkedListNode(None)
+    #     temp_Node = empty_Node
+
+    #     for _ in range(n):
+    #         iterator = self.head
+    #         while iterator:
+    #             empty_Node.next = SinglyLinkedListNode(iterator.data)
+    #             empty_Node = empty_Node.next
+    #             iterator = iterator.next
+    #     return temp_Node.next
+
 
 numList = SinglyLinkedList([35,23,546,67,86,234,56,767,34,1,98,78,555])
 
@@ -189,3 +225,10 @@ numList.printList()
 numList.deleteTail()
 numList.printList()
 print(numList.findMinNum())
+
+
+sorted_numList = SinglyLinkedList([2,10,34,45,67,356])
+sorted_numList.printList()
+sorted_numList.insertNodeInSorted(3)
+sorted_numList.insertNodeInSorted(50)
+sorted_numList.printList()
