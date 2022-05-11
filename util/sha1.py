@@ -3,10 +3,14 @@
 import hashlib
 
 def main():
-    # 変換したい文字列
+    # 文字列
     message = "password01"
-    # ハッシュ値を求めた結果
-    print(hashlib.sha1(message.encode("utf-8")).hexdigest())
+    # 文字列をエンコード
+    encoded_message = message.encode("utf-8")
+    # 文字列からsha1 のハッシュ値を求める
+    hash_object = hashlib.sha1(encoded_message)
+    # ハッシュ値を16進数でプリント
+    print(hash_object.hexdigest())
 
 if __name__ == "__main__":
     main()
