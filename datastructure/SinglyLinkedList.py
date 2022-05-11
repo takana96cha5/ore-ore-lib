@@ -10,10 +10,12 @@ class Node:
         newNode.next = tempNode
 
 class SinglyLinkedList:
-    # 配列を連結リストに変換する関数
+    # 配列を連結リストに変換するコンストラクタ
     def __init__(self, arr):
         self.head = Node(arr[0]) if len(arr) > 0 else Node(None)
 
+        # 連結リストにほかのノードを追加します。
+        # nodeはオブジェクトなので、=は値ではなく、メモリアドレスを指している点に注意してください。
         currentNode = self.head;
         for i in range(1,len(arr)):
             currentNode.next = Node(arr[i])
@@ -22,6 +24,7 @@ class SinglyLinkedList:
     # 指定したインデックス番号のノードの要素を取得
     def at(self, index):
         iterator = self.head;
+
         for i in range(0, index):
             iterator = iterator.next
             if iterator == None: return None
