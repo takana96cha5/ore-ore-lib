@@ -1,4 +1,5 @@
 '''片方向連結リスト'''
+
 class Node:
     def __init__(self,data):
         self.data = data
@@ -16,21 +17,21 @@ class SinglyLinkedList:
 
         # 連結リストにほかのノードを追加します。
         # nodeはオブジェクトなので、=は値ではなく、メモリアドレスを指している点に注意してください。
-        currentNode = self.head;
+        currentNode = self.head
         for i in range(1,len(arr)):
             currentNode.next = Node(arr[i])
             currentNode = currentNode.next
 
-    # 指定したインデックス番号のノードの要素を取得
+    # 指定したインデックス番号のノードの要素を取得するメソッド
     def at(self, index):
-        iterator = self.head;
+        iterator = self.head
 
         for i in range(0, index):
             iterator = iterator.next
             if iterator == None: return None
         return iterator
 
-    # ノードのインデックス番号を取得する関数
+    # ノードのインデックス番号を取得するメソッド
     def findNode(self, key):
         iterator = self.head
         index = 0
@@ -40,37 +41,102 @@ class SinglyLinkedList:
             index += 1
         return None
 
-    # 要素を先頭に挿入する関数
-    def preappend(self, newNode):
-        newNode.next = self.head
-        self.head = newNode
 
-    # 要素を末尾に挿入する関数
-    def append(self, newNode):
-        iterator = self.head;
+    # リストの中の最小値のインデックスを返すメソッド
+    def findMinNum(self):
+        # head を iterator に代入します。
+        iterator = self.head
+        # 暫定の最小値として float('inf') を入れておきます。
+        minValue = float('inf')
+        # 最小値を更新したら index も更新します。
+        index = 0
+        # リストのインデックスを追いかける変数
+        i = 0
+
+        # iteratorがnullでない間リストを走査します。
+        while iterator != None :
+            # 暫定の最小値よりもiteratorの値が小さかったら更新します。
+            if minValue >= iterator.data :
+                minValue = iterator.data
+                # その時の i を index に保存します。
+                index = i
+            # 次のノードへ進めます。
+            iterator = iterator.next
+            # iをインクリメントします。
+            i += 1
+
+        return index
+
+
+    # 要素を先頭に挿入するメソッド
+    def preappend(self, data):
+
+        # deta を入れた新しいノードを作ります。
+        node = Node(data)
+
+        newNode.next = self.head
+        self.head = node
+
+    # 要素を末尾に挿入するメソッド
+    def append(self, data):
+
+        # deta を入れた新しいノードを作ります。
+        node = Node(data)
+
+        iterator = self.head
         while iterator.next is not None:
             iterator = iterator.next
-        iterator.next = newNode
+        iterator.next = node
 
-    # リストの先頭の要素をポップします。O(1)
+    # 特定の位置に挿入するメソッド
+    def insertAtPosition(self, position, data):
+
+        # deta を入れた新しいノードを作ります。
+        node = Node(data)
+
+        # iterator に head を入れます。
+        iterator = self.head
+        # 与えられた位置の1つ前までリストを走査します。
+        for i in range(position) :
+            # もしiterator.next が null だったら head を返します。
+            if iterator.next == None: return None
+            # iterator を next へ進めます。
+            iterator = iterator.next
+
+        # tempに現在のiterator.nextを入れます。
+        temp = iterator.next
+        # iterator.next を新しいノードにします。
+        iterator.next = node
+        # 新しいノードの next を temp にします。
+        node.next = temp
+
+    # リストの先頭の要素をポップするメソッド O(1)
     def popFront(self):
         self.head = self.head.next
 
-    # インデックス番号の要素を削除します。
+    # リストの末尾の要素をポップするメソッド
+    def deleteTail(self):
+        iterator = self.head
+        while iterator.next is not None:
+            prev = iterator
+            iterator = iterator.next
+        prev.next = None
+
+    # インデックス番号の要素を削除するメソッド
     def delete(self,index):
         if index == 0: return self.popFront()
 
-        iterator = self.head;
+        iterator = self.head
         # 目的のデータの手前のインデックスまで、リストの中を反復します。
         for i in range(0, index-1):
             # もし、次のノードがなかった場合、nullを返します。インデックス範囲外を意味します。
-            if iterator.next == None: return None;
+            if iterator.next == None: return None
             iterator = iterator.next
         # iterator（削除したい要素の1つ前）, 削除したい要素(A), その次の要素(B)
         # iteratorのポインタをAではなくBに変更します。
         iterator.next = iterator.next.next
 
-    # 反転したリストの要素を全て出力する関数
+    # リストの要素の順序を反転するメソッド
     def reverseList(self):
         if self.head is None or self.head.next is None: return
 
@@ -88,13 +154,30 @@ class SinglyLinkedList:
         # 処理が終わったら、headのnextを反転したリストを含むtempHeadに割り当てましょう。
         self.head = reverse
 
-    # リストの要素を全て出力する関数
+    # リストの要素を全てプリントするメソッド
     def printList(self):
-        iterator = self.head;
+        iterator = self.head
         while iterator is not None:
             print(iterator.data, end =" ")
             iterator = iterator.next
         print("")
+
+    # 連結リストの長さを返すメソッド
+    def linkedListLength(self):
+        iterator = self.head
+        cnt = 0
+        while iterator is not None:
+            iterator = iterator.next
+            cnt += 1
+        return cnt
+
+    # 連結リストの末尾の値を返すメソッド
+    def linkedListLastValue(self):
+        iterator = self.head
+        while iterator.next is not None:
+            iterator = iterator.next
+        return iterator.data
+
 
 numList = SinglyLinkedList([35,23,546,67,86,234,56,767,34,1,98,78,555])
 
@@ -103,3 +186,6 @@ numList.reverseList()
 numList.printList()
 numList.reverseList()
 numList.printList()
+numList.deleteTail()
+numList.printList()
+print(numList.findMinNum())
