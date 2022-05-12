@@ -252,21 +252,21 @@ class SinglyLinkedList:
     #             iterator = iterator.next
     #     return temp_Node.next
 
+if __name__ == '__main__':
+    # numList = SinglyLinkedList([35,23,546,67,86,234,56,767,34,1,98,78,555])
+    numList = SinglyLinkedList([0,1,2,3,4,5,6,7,8,9,10,11,12,13])
+    # print("--------")
+    # numList.print_list()
 
-# numList = SinglyLinkedList([35,23,546,67,86,234,56,767,34,1,98,78,555])
-numList = SinglyLinkedList([0,1,2,3,4,5,6,7,8,9,10,11,12,13])
-# print("--------")
-# numList.print_list()
+    # print(numList.at(3).next.data)
+    # print(numList.find_index_of_data(86))
 
-# print(numList.at(3).next.data)
-# print(numList.find_index_of_data(86))
+    # print("--------")
 
-# print("--------")
-
-# sortedList = SinglyLinkedList([2,10,34,45,67,356])
-# sortedList.print_list()
-# sortedList.insert_in_sorted_list(16)
-# sortedList.print_list()
-# sortedList.delete_tail()
-# sortedList.print_list()
-numList.reverse_list()
+    # sortedList = SinglyLinkedList([2,10,34,45,67,356])
+    # sortedList.print_list()
+    # sortedList.insert_in_sorted_list(16)
+    # sortedList.print_list()
+    # sortedList.delete_tail()
+    # sortedList.print_list()
+    numList.reverse_list()
