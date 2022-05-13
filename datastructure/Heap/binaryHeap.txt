@@ -1,0 +1,687 @@
+二分ヒープ
+二分ヒープ（binary heap）と呼ばれる別の二分木構造を学習します。
+
+このデータ構造は、O(nlogn) 時間で追加の記憶領域をほとんど必要としない in-place ソート（要素交換 O(1) を繰り返す操作）を行うことができ、
+高性能な優先度付きキュー（priority queue）を作ることができる重要な構造を指します。
+
+以前、スコープの「静的、スタック、ヒープメモリ」で学習したヒープメモリと混同しないように気をつけてください。
+ヒープメモリはスタックメモリの外に割り当てられた動的メモリのことを指す用語で、
+使用しなくなったメモリをヒープメモリから自動的に削除する処理は、ガベージコレクタと呼ばれました。
+
+二分ヒープとは、ヒーププロパティに従う完全二分木（complete binary tree）のことを指します。
+ヒーププロパティは、要素間の順序関係に従った比較によって、
+各々のノードはそのノードの子よりも大きいか等しくなるように配置されることを指します。
+
+では、最大ヒープから見ていきましょう。
+根ノードが常にリスト全体の最大値となっていて、
+すべてのノードについて「ノード N の親 >= ノード N」が成立している二分木データ構造を、
+最大ヒープ（max heap）と呼ばれます。
+
+このように、親ノードは常に子ノードよりも大きい限りヒーププロパティは満たされます。
+親子間のみに大小関係があり、兄弟間に制約はないことに注意してください。
+
+しかし、二分木はノードと 2 つの子だけで構成されているわけではありません。
+子も子を持っているので、二分ヒープでは根ノードがヒーププロパティを維持しつつ、
+左右の部分木もヒーププロパティを維持する構造である必要があります。
+ここで、再帰が登場すると気づくでしょう。
+
+逆に、根ノードが常にリスト全体の最小値となっていて、
+すべてのノードについて「ノード N の親 <= ノード N」が成立している時、
+最小ヒープ（min heap）と呼ばれます。
+
+最大ヒープとその演算子について説明しますが、
+最大ヒープのデータ構造は最小ヒープと対称であることを覚えておいてください。
+同じロジックが適用されます。
+
+2 番目に注意すべき点は、定義上、二分ヒープは完全二分木（complete binary tree）であるということです。
+最下層を除いてすべての深さがノードで満たされ、最下層の葉ノードが可能な限り左に寄せられているような木を
+完全二分木（complete binary tree）と呼びました。
+
+つまり、この性質を利用すると、私たちはヒープを簡単に配列として表現することができます。
+
+インデックスを用いると、0 は根ノードを表します。以前学習した通り、完全二分木（complete binary tree）は階層 l では、
+2^l のノードを含むので、h 階層までは 2^0 .. 2^1 .. 2^2 .. 2^3 .. 2^h のように表すことができます。
+
+これは、各階層が前の階層の 2 倍の数のノードを持つことを意味します。
+以下のようにして、i 番目のノードの子を取得することができます。
+
+'''
+left(i):
+   return 2i + 1
+
+right(i):
+   return 2i + 2
+'''
+
+親ノードは以下のように求めることができます。
+
+'''
+parent(i):
+   return floor({i-1}/2)
+'''
+
+完全二分木（complete binary tree）では、葉ノードだけが空のノードを持ちます。葉ノードは最後と最後から 2 番目の階層にあり、できるだけ左に寄っています。これは完全二分木（complete binary tree）の配列表現では、空のノードを持たないことを意味します。
+
+
+では具体例を見ていきましょう。
+
+'''
+
+
+
+'''
+では、最大ヒープの最も重要な演算子である Max-Heapify 関数について詳しく見ていきましょう。
+
+Max-Heapify
+Max-Heapify 関数は、配列とターゲットインデックス i を受け取り、ノード i が最大ヒーププロパティを満たすように操作します。
+Max-Heapify はノード i の左右の部分木が最大ヒープであることを前提としています。
+
+
+左右の部分木が最大ヒープになっているということは、
+ノード i の子に各部分木の最大値が配置されていることを意味するので、
+ノード i を left(i) と right(i) で比較します。
+ノード i、left(i)、right(i) の中でどれが最大であるかを判断し、スワップします。
+
+ノード i が最大になっていれば、
+ヒーププロパティを満たしていると言い換えることができるので操作を終了します。
+そうでなければ、最大のノードが新しい親となり、そのノードとノード i をスワップします。
+
+左が最大の場合は左とスワップし、右が最大の場合は右とスワップします。
+スワップした後も、アルゴリズムが終了したわけではありません。
+ノード i は、左と右が最大ヒープである部分木の新しい根ノードになります。
+ノード i が部分木の最大ヒーププロパティを満たすまで、再帰的に Max-heapify を呼び出します。
+
+
+Max-Heapify は、ノード i が最大、つまり最大ヒープになるまで何度も呼び出されます。
+また葉ノードである部分木は、空のノードより大きいという扱いを受けるため、
+定義上は常に最大ヒープとみなされることに注意してください。
+
+
+'''
+maxHeapify(arr, i):
+   l = heap.left(i)
+    r = heap.right(i)
+
+    biggest = i
+    # i、left、rightの中から最大のものを選択。
+    if(arr[l] > arr[biggest]) biggest = l
+    if(arr[r] > arr[biggest]) biggest = r
+
+    if(biggest != i):
+        temp = arr[i]
+        arr[i] = arr[biggest]
+        arr[biggest] = temp
+        # スワップが発生し、ヒープのプロパティを保証するためにiの新しい場所でmaxHeapifyを実行します。
+        heap.maxHeapify(arr,biggest)
+'''
+
+では、Max-Heapify を実装してみましょう。
+
+'''
+
+class Heap:
+
+    @staticmethod
+    def left(i):
+        return 2*i + 1
+
+    @staticmethod
+    def right(i):
+        return 2*i + 2
+
+    @staticmethod
+    def maxHeapify(arr, i):
+        l = Heap.left(i)
+        r = Heap.right(i)
+
+        biggest = i;
+        if l < len(arr) and arr[l] > arr[biggest]: biggest = l
+        if r < len(arr) and arr[r] > arr[biggest]: biggest = r
+
+        if biggest != i:
+            temp = arr[i]
+            arr[i] = arr[biggest]
+            arr[biggest] = temp
+            Heap.maxHeapify(arr,biggest)
+
+heap1 = [2,42,11,30,10,7,6,5,9]
+Heap.maxHeapify(heap1,0) # 根ノードが2で、2 < 42のため、最大ヒープではありません。
+print(heap1)
+
+heap2 = [56,4,51,10,12,5,12,4,6,5]
+Heap.maxHeapify(heap2,1) # インデックス1が4で、4 < 10のため、最大ヒープではありません。
+print(heap2)
+
+'''
+
+Max-Heapify の時間計算量は、O(logn) です。
+それは配列の要素交換 O(1) を繰り返す操作のため、繰り返し回数に比例した計算量になります。
+最悪のケースは、根ノードが最も深い葉ノードと交換される場合であり、計算量は O(h) になります。
+今 n 個の葉ノードを持つ完全二分木の高さは log₂n なので、h と置き換えて計算量は O(logn) になります。
+一方、各要素はその場でスワップされるため、空間計算量は O(1) となります。
+
+これで最大ヒーププロパティを満たしていないが、
+左右の部分木が最大ヒープである根ノードを持つ二分木を「ヒープ化」できるようになりました。
+
+
+最大ヒープの構築
+次は、与えられた配列から最大ヒープを構築してみましょう。
+
+大前提として，二分木のすべての葉ノードは定義上ヒープであるということが挙げられます。
+ヒープとは、「子要素は親要素より常に大きいか等しい（または常に小さいか等しい）」という制約を持つ木構造のことを指します。
+
+二分ヒープは完全二分木（complete binary tree）であり、これは全ノードの半分が葉ノードであることを意味します。
+つまり、完全二分木（complete binary tree）を表す配列において、インデックス n 番目が最後の葉ノードとすると、
+その親ノードは floor(n−1/2) であることを意味します。それは floor(n/2) からn までが全て葉ノードだからです。
+
+最後の葉ノードの親ノードであるインデックス i から maxHeapify を開始すると、
+i から 0 までゆっくりと逆行しながら、途中のすべてのノードを maxHeapify することができます。
+根ノードに到達するまでには、すべてのノードが max-heap であることが保証され、木全体が最大ヒープになります
+
+'''
+buildMaxHeap(arr)
+middle = parent(arr.length)
+    for(let i = middle; i >=0; i--):
+        maxHeapify(arr,i)
+'''
+
+以下で、配列 arr を受け取り、
+配列の状態をその場で更新し、最大ヒープ化する buildMaxHeap という関数を作成してください。
+
+'''
+
+import math
+
+class Heap:
+
+    @staticmethod
+    def left(i):
+        return 2*i + 1
+
+    @staticmethod
+    def right(i):
+        return 2*i + 2
+
+    @staticmethod
+    def parent(i):
+        return math.floor((i-1)/2)
+
+    @staticmethod
+    def maxHeapify(arr, i):
+        l = Heap.left(i)
+        r = Heap.right(i)
+
+        biggest = i;
+        if l < len(arr) and arr[l] > arr[biggest]: biggest = l
+        if r < len(arr) and arr[r] > arr[biggest]: biggest = r
+
+        if biggest != i:
+            temp = arr[i]
+            arr[i] = arr[biggest]
+            arr[biggest] = temp
+            Heap.maxHeapify(arr,biggest)
+
+    # builMacHeapを実装します。
+    @staticmethod
+    def buildMaxHeap(arr):
+        middle = Heap.parent(len(arr))
+        # 最後の葉ノードの親ノードから根ノードまで maxHeapfy します。
+        for i in range(middle, -1, -1):
+            Heap.maxHeapify(arr,i)
+
+heap1 = [2,42,11,30,10,7,6,5,9]
+print(heap1)
+Heap.buildMaxHeap(heap1)
+# 根ノードが最大値となり木全体が最大ヒープになりました。
+print(heap1) # 42, 30, 11, 9, 10, 7, 6, 5, 2
+
+heap2 = [56,4,51,10,12,5,12,4,6,5]
+print(heap2)
+Heap.buildMaxHeap(heap2)
+print(heap2) # 56, 12, 51, 10, 5, 5, 12, 4, 6, 4
+
+'''
+
+この buildMaxHeap は、空間計算量が O(1) のアルゴリズムです。
+時間計算量に関しては、O(logn) を n 回呼び出し、O(nlogn) になっているように思えるかもしれませんが、実際は O(n) になります。
+
+ヒープソート
+では今度はリストの並べ替えを二分ヒープを用いて実装していきます。
+
+最大値を繰り返し取得し、それをヒープの最後の葉ノードと入れ替えてヒープサイズを1減らし、根ノードからヒープサイズまでの配列をヒープ化します。
+
+未整列のリストから最大ヒープを作成します。
+このときヒープのサイズを把握するための変数を用意しておきます。
+最初のヒープのサイズは配列全体のサイズで、この後ゆっくりとゼロまで減少していきます。
+
+次に根ノード（最大値）と最後の葉ノードを入れ替えて、サイズを小さくします。
+そして、最大の要素が根ノードとなるように、二分ヒープを maxHeapify します。
+
+これをヒープサイズがゼロになるまで繰り返します。
+配列内のヒープの右側にあるデータはすべてソートされた配列になります。
+ヒープサイズが 0 になったとき、ソートされた配列を取得することができます。
+
+このアルゴリズムを要素交換によって実行されるので二分ヒープをいつ終了するか把握するために、
+maxHeapify 関数を更新してヒープサイズを常に追跡しておかなければいけない点に注意してください。
+
+'''
+
+heapSort(arr):
+buildMaxHeap(arr)
+    heapEnd = arr.length - 1
+    while(heapEnd > 0):
+        # 最大値であるヒープの根ルートと葉ノードを入れ替えます。
+        temp = arr[heapEnd]
+        arr[heapEnd] = arr[0]
+        arr[0] = temp
+        heapEnd--
+        maxHeapify(arr, heapEnd, 0)
+
+'''
+
+このアルゴリズムは合計 n 回の maxHeapify 呼び出しとスワップを行います。
+maxHeapify は O(logn) なので、ヒープソートの時間計算量は O(nlogn) になります。
+配列の要素交換を繰り返す操作のため、空間計算量は O(1) になります。
+では、ヒープソートアルゴリズムを実装してみましょう。
+
+'''
+
+import math
+
+class Heap:
+
+    @staticmethod
+    def left(i):
+        return 2*i + 1
+
+    @staticmethod
+    def right(i):
+        return 2*i + 2
+
+    @staticmethod
+    def parent(i):
+        return math.floor((i-1)/2)
+
+    # ヒープのサイズを追跡するために maxHeapify を拡張します
+    @staticmethod
+    def maxHeapify(arr, heapEnd, i):
+        l = Heap.left(i)
+        r = Heap.right(i)
+        biggest = i
+
+        # heapEnd より後ろはすでにソートされているので、l と　r のインデックスは heapEnd までを比較します。
+        if l <= heapEnd and arr[l] > arr[biggest]: biggest = l
+        if r <= heapEnd and arr[r] > arr[biggest]: biggest = r
+
+        if biggest != i:
+            temp = arr[i]
+            arr[i] = arr[biggest]
+            arr[biggest] = temp
+            Heap.maxHeapify(arr,heapEnd, biggest)
+
+    @staticmethod
+    def buildMaxHeap(arr):
+        middle = Heap.parent(len(arr))
+        for i in range(middle, -1, -1):
+            Heap.maxHeapify(arr, len(arr)-1, i)
+
+    # ヒープソートを実装します。
+    @staticmethod
+    def heapSort(arr):
+        # まずは buildMaxHeap で arr をヒープ構造にします。1番上は最大値になっています。
+        Heap.buildMaxHeap(arr)
+
+        # ヒープサイズを追跡するため heapEnd を配列の最後の要素にします。
+        heapEnd = len(arr) - 1
+        while(heapEnd > 0):
+            #  最大値であるヒープの根ルートと葉ノード heapEnd を入れ替えます。
+            temp = arr[heapEnd]
+            arr[heapEnd] = arr[0]
+            arr[0] = temp
+
+            #　一番最後はソートされているので、heapEnd から 1 引きます。
+            heapEnd -= 1
+            Heap.maxHeapify(arr, heapEnd, 0)
+
+
+heap1 = [2,42,11,30,10,7,6,5,9]
+print(heap1)
+Heap.heapSort(heap1)
+print(heap1) # 昇順にソートされました。
+
+heap2 = [56,4,51,10,12,5,12,4,6,5]
+print(heap2)
+Heap.heapSort(heap2)
+print(heap2)
+
+'''
+
+優先度付きキュー
+ヒープは、優先度付きキューに最適なデータ構造です。
+
+優先度付きキューは
+
+キューに対して要素を優先度付きで追加する
+最も高い優先度を持つ要素をキューから取り除く
+ことをサポートしたデータ構造です。
+
+優先度付きキューは、要素を優先度に従って整理し、以下の操作をサポートするデータ構造として定義することができます。
+
+Insert(x): 要素 x をキューの適切な位置に挿入します。
+Top(): 最も高い優先度を持つ要素を取得します。
+Pop(): 優先度の高い要素を削除して取得します。
+
+二分ヒープを使うと、Top() は O(1)、Pop() は O(logn)、Insert は O(logn) で実現することができます。
+最も高い優先度を持つキューや、最も低い優先度を持つキューは、最大ヒープや最小ヒープを用いて実装することができます。
+
+最大値を優先する場合、優先度を決定したり、誰が何にアクセスするかを制御したり、
+スケジュール管理システムを必要とするアプリケーションの実装には欠かせません。
+一方、最小値を優先する場合、イベント駆動型のアプリケーションに使用することができ、
+そこではイベントがキューに追加され、割り当てられた発生時刻までに実行されます。
+
+それでは二分ヒープを使って、最大値を優先するケースのデータ構造を構築していきましょう。
+O(1) で末尾に pop、push することができる動的配列の内部に全ての要素を保持する構造体を作り、
+ヒーププロパティを維持するために必要な演算を適用します。
+最大値を優先する場合は、値が大きいほど優先度が高くなるので、最大ヒープを使って実装を行っていきます。
+
+'''
+優先度付きキュー top
+easy
+優先度付きキューとは、優先度に従って要素の挿入・参照・削除を行うことができるデータ構造で、３つの基本操作 top、pop、insertを持ちます。
+このようなデータ構造を実装するためには、ソート済みの配列を使うことも考えられますが、
+優先度の最も高い要素に着目するデータ構造なので、より効率良いヒープがよく使われます。
+優先度付きキューはO(1) で末尾に pop、push することができる動的配列の内部に全ての要素を保持する構造体を作り、
+更新された後もヒーププロパティを維持するために必要な演算を適用していくことによって定義できます。
+では、整数によって構成された配列 arr と配列から最大ヒープを構築する HeapLibrary が与えられるので
+以下に従って、PriorityQueue クラスを作成してください。
+
+ArrayList maxHeap	要素を保持する動的配列。arr の状態の変更を防ぐため、ディープコピーを行ってください。
+HeapLibrary の buildMaxHeap を使って、配列を配列を最大ヒープへ変換してください。
+int top()	最も高い優先度を持つ要素を取得します。
+
+テストケース
+pq1 = new PriorityQueue([2,3,43,2,53,6,75,10])
+pq1.top() --> 75
+pq2 = new PriorityQueue([3,12,0,2,9,1,65,32])
+pq2.top() --> 65
+pq3 = new PriorityQueue([1,2,3,4,8,2,1,9,7,3,4])
+pq3.top() --> 9
+
+
+import math
+import copy
+
+class HeapLibrary:
+   @staticmethod
+   def buildMaxHeap(arr):
+      mid = HeapLibrary.parent(len(arr)-1)
+
+      for i in range(mid, -1, -1):
+         HeapLibrary.maxHeapify(arr, len(arr)-1, i)
+
+   @staticmethod
+   def maxHeapify(arr, heapEnd, i):
+      l = HeapLibrary.left(i);
+      r = HeapLibrary.right(i);
+      biggest = i;
+
+      if l <= heapEnd and arr[l] > arr[i]: biggest = l
+      if r <= heapEnd and arr[r] > arr[i]: biggest = r
+
+      if i != biggest:
+         temp = arr[i]
+         arr[i] = arr[biggest]
+         arr[biggest] = temp
+
+         return HeapLibrary.maxHeapify(arr, heapEnd, biggest)
+
+   @staticmethod
+   def left(i):
+      return i*2+1
+
+   @staticmethod
+   def right(i):
+      return i*2+2
+
+   @staticmethod
+   def parent(i):
+      return math.floor((i-1)/2)
+
+class PriorityQueue:
+   def __init__(self,arr):
+      self.maxHeap = copy.deepcopy(arr)
+      HeapLibrary.buildMaxHeap(self.maxHeap)
+
+   def top(self):
+      return self.maxHeap[0]
+
+if __name__ == '__main__':
+    pq1 = PriorityQueue([2,3,43,2,53,6,75,10])
+    print(pq1.top())
+
+    pq2 = PriorityQueue([3,12,0,2,9,1,65,32])
+    print(pq2.top())
+
+    pq3 = PriorityQueue([1,2,3,4,8,2,1,9,7,3,4])
+    print(pq3.top()*3)
+'''
+
+二分ヒープを構築し、最優先度の高い値にアクセスできるようになったので、次は pop() の実装方法を見てみましょう。
+
+最優先度の高い値を削除するには、根ノードの値を削除し、新しい木がヒーププロパティを持っていることを確認する必要があります。
+
+そこで、根ノードを二分ヒープの最後の葉ノードと入れ替え、最後の葉ノードを pop し、新しい根ノードで maxHeapify を呼び出します。
+この処理は、ヒープソートで行った処理と非常に類似しています。
+
+処理の時間計算量は O(logn) です。
+
+'''
+pop(heapArr)
+popped = heapArr[0]
+    heapArr[0] = heapArr[heapArr.length-1]
+    heapArr.pop()
+    maxHeapify(heapArr, heapArr.length-1, 0)
+    return popped
+'''
+
+では、pop() メソッドを PriorityQueue 構造に追加してみましょう。
+
+'''
+
+優先度付きキュー pop
+medium
+問題 451 では、二分ヒープを構築し、最も優先度の高い値にアクセスできるようになりました。
+それでは、最も優先度の高い要素を削除する pop() メソッドを実装してみましょう。
+
+ArrayList maxHeap	要素を保持する動的配列。arr の状態の変更を防ぐため、ディープコピーを行ってください。
+HeapLibrary の buildMaxHeap を使って、配列を配列を最大ヒープへ変換してください。
+int top()	最も高い優先度を持つ要素を取得します。
+integer pop()	優先度付きキューから最優先度の高い値を削除して返します。根ノードが更新された後もヒーププロパティを保っている必要があります。
+根ノードを二分ヒープの最後の葉ノードと入れ替え、最後の葉ノードを pop し、新しい根ノードで maxHeapify を呼び出すことで実現することができます。
+
+テストケース
+pq = new PriorityQueue([2,3,43,2,53,6,75,10])
+pq.pop() --> 75
+pq.pop() --> 53
+pq.pop() --> 43
+pq.pop() --> 10
+
+import math
+import copy
+
+class HeapLibrary:
+   @staticmethod
+   def buildMaxHeap(arr):
+      mid = HeapLibrary.parent(len(arr)-1)
+
+      for i in range(mid, -1, -1):
+         HeapLibrary.maxHeapify(arr, len(arr)-1, i)
+
+   @staticmethod
+   def maxHeapify(arr, heapEnd, i):
+      l = HeapLibrary.left(i);
+      r = HeapLibrary.right(i);
+      biggest = i;
+
+      if l <= heapEnd and arr[l] > arr[biggest]: biggest = l
+      if r <= heapEnd and arr[r] > arr[biggest]: biggest = r
+
+      if i != biggest:
+         temp = arr[i]
+         arr[i] = arr[biggest]
+         arr[biggest] = temp
+
+         return HeapLibrary.maxHeapify(arr, heapEnd, biggest)
+
+   @staticmethod
+   def left(i):
+      return i*2+1
+
+   @staticmethod
+   def right(i):
+      return i*2+2
+
+   @staticmethod
+   def parent(i):
+      return math.floor((i-1)/2)
+
+class PriorityQueue:
+
+    def __init__(self, arr):
+        self.maxHeap = copy.deepcopy(arr)
+        HeapLibrary.buildMaxHeap(self.maxHeap)
+
+    def top(self):
+        return self.maxHeap[0]
+
+    def pop(self):
+        popped = self.maxHeap[0]
+        self.maxHeap[0] = self.maxHeap[len(self.maxHeap) -1]
+        self.maxHeap.pop()
+        HeapLibrary.maxHeapify(self.maxHeap, len(self.maxHeap)-1, 0)
+        return popped
+
+if __name__ == '__main__':
+    pq = PriorityQueue([2,3,43,2,53,6,75,10])
+    print(pq.pop())
+    print(pq.pop())
+    print(pq.pop())
+    print(pq.pop())
+'''
+
+最後に、insert 関数を見てみましょう。
+insert 関数は値 x を受け取り、x を優先度キューの正しい位置に配置します。
+
+最大ヒープでは、ヒーププロパティが維持されるように x を配置する必要があります。
+そのためには、最後の項目として x をヒープにプッシュし、
+それ自身を親と比較しながら上に移動させ、必要に応じて場所を入れ替える処理が必要になります。
+
+親が x より小さい場合はスワップが行われ、ヒーププロパティが満たされるまで x の新しい親を繰り返しチェックします。
+この処理は、下から根ノードに向かって行われるので、"sifting up" と呼ばれます。
+"sifiting down" は、maxHeapify と同様に、根ノードから葉ノードに向かって進む処理です。
+
+'''
+
+insert(maxHeap, x):
+   maxHeap.push(x)
+   i = maxHeap.length-1
+   parent = parent(i)
+   while(parent >= 0 && maxHeap[parent] < x):
+      temp = maxHeap[i]
+      maxHeap[i] = maxHeap[parent]
+      maxHeap[parent] = temp
+      i = parent;
+      parent = parent(i)
+
+'''
+
+insert 関数をサポートするように、PriorityQueue 構造を拡張してください。
+挿入は、logn の長さのパスで親からツリーを上っていくため、O(logn) で実行されます。
+
+'''
+import math
+import copy
+
+class HeapLibrary:
+
+    @staticmethod
+    def buildMaxHeap(arr):
+        mid = HeapLibrary.parent(len(arr)-1)
+
+        for i in range(mid, -1, -1):
+            HeapLibrary.maxHeapify(arr, len(arr)-1, i)
+
+    @staticmethod
+    def maxHeapify(arr, heapEnd, i):
+        l = HeapLibrary.left(i)
+        r = HeapLibrary.right(i)
+        biggest = i
+
+        if l <= heapEnd and arr[l] > arr[biggest]: biggest = l
+        if r <= heapEnd and arr[r] > arr[biggest]: biggest = r
+
+        if i != biggest:
+            temp = arr[i]
+            arr[i] = arr[biggest]
+            arr[biggest] = temp
+
+            return HeapLibrary.maxHeapify(arr, heapEnd, biggest)
+
+    @staticmethod
+    def left(i):
+        return i*2+1
+
+    @staticmethod
+    def right(i):
+        return i*2+2
+
+    @staticmethod
+    def parent(i):
+        return math.floor((i-1)/2)
+
+class PriorityQueue:
+
+    def __init__(self, arr):
+        self.maxHeap = copy.deepcopy(arr)
+        HeapLibrary.buildMaxHeap(self.maxHeap)
+
+    def top(self):
+        return self.maxHeap[0]
+
+    def pop(self):
+        popped = self.maxHeap[0]
+        self.maxHeap[0] = self.maxHeap[len(self.maxHeap) -1]
+        self.maxHeap.pop()
+        HeapLibrary.maxHeapify(self.maxHeap, len(self.maxHeap)-1, 0)
+        return popped
+
+    def insert(self, x):
+        self.maxHeap.append(x)
+        i = len(self.maxHeap)-1
+        parent = HeapLibrary.parent(i)
+        while parent >= 0 and self.maxHeap[parent] < x :
+            temp = self.maxHeap[i]
+            self.maxHeap[i] = self.maxHeap[parent]
+            self.maxHeap[parent] = temp
+            i = parent
+            parent = HeapLibrary.parent(i)
+if __name__ == '__main__':
+    pq = PriorityQueue([2,3,43,2,53,6,75,10])
+    print(pq.maxHeap)
+    pq.insert(5)
+    print(pq.maxHeap)
+    pq.insert(5)
+    print(pq.maxHeap)
+    pq.insert(79)
+    print(pq.maxHeap)
+    pq.pop()
+    print(pq.maxHeap)
+'''
+
+まとめ
+全てのノードについて「ノード N の親 >= ノード N」が成立している二分木データ構造を最大ヒープという。
+最大ヒープは親子間に大小関係があるが、兄弟間には大小関係がない。
+二分ヒープは完全二分木であることから、0 から始まるインデックスで i 番目のノードの右側の子は 2i + 2 、親は floor({i-1} / 2) と表すことができる。
+Max-Heapify の空間計算量は O(1) です。
+ヒープソートの時間計算量は O(nlogn) です。
+二分ヒープにおける優先度付きキューについて、pop は O(logn) 、insert は O(logn) で行うことができる。

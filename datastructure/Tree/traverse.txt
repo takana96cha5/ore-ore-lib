@@ -1,0 +1,404 @@
+木構造の走査
+木構造の走査（traverse）とは木構造にある全ノードを一回ずつ体系的に調査する処理のことを指します。
+したがって、O(n) の時間計算量であり、「walk」とも呼ばれます。
+
+前回、連結リストの走査について学習しました。
+連結リストでは、任意のノードから開始し、値を取得し、次のノードに移動します。
+
+printList() は、連結リストを辿り、各ノードを表示します。
+現在のノードから次のノードへのポインタは辺 {currentNode, currentNode.next} を表し、
+アルゴリズムはグラフ内のすべてのノードを巡回します。
+
+[data|next] -> [data|next] -> [data|next] -> [data|null]
+Head                                         Tail
+
+'''python
+class Node:
+    def __init__(self,data):
+        self.data = data
+        self.next = None
+
+class SinglyLinkedList:
+    # 配列を受け取り、連結リストを作成します。
+    def __init__(self, arr):
+        # 先頭を初期化します。
+        self.head = Node(arr[0]) if len(arr) > 0 else Node(None)
+
+        currentNode = self.head;
+        for i in range(1,len(arr)):
+            currentNode.next = Node(arr[i])
+            currentNode = currentNode.next
+
+    def at(self, index):
+        iterator = self.head;
+        # indexの終わりまで反復します。iteratorがnullになる時は、indexが範囲外を意味します。
+        for i in range(0, index):
+            iterator = iterator.next
+            if iterator == None: return None
+
+        return iterator
+
+    def printList(self):
+        iterator = self.head;
+        while iterator is not None:
+            print(iterator.data, end =" ")
+            iterator = iterator.next
+        print()
+
+numList = SinglyLinkedList([35,23,546,67,86,234,56,767,34,1,98,78,555])
+numList.printList()
+'''
+
+このように連結リストや 1 次元の配列のような線形性のあるデータ構造では、走査は一般的に前から順番に行われます。
+
+
+一方、木構造では少し異なった走査方法を取ります。
+木構造の走査には深さ優先と幅優先の二種類の方法があります。
+
+深さ優先走査
+深さ優先走査は、現在のノードを調査し、その子ノードに対して同じことを繰り返します。
+したがって、再帰呼び出しで容易に表現することができます。
+
+幅優先走査
+幅優先走査は、深さが同じノードを浅い方から順に走査していきます。
+
+
+深さ優先走査
+二分木は、根ノード（N）、左（L）、右（R）の 3 つのノード値を持っており、再帰的に出力されます。
+深さ優先走査では、ノードを調査する順序によって以下の 3 つに走査法が分類されます。
+
+前順（pre-order）（NLR）
+前順走査では、根 -> 左の部分木 -> 右の部分木の順で調査を行います。
+根ノードが空のノードになると終了します。
+根ノードが最初に処理されるので、この走査は二分木の正確な順序を表示します。
+
+間順（in-order）（LNR）
+間順走査では、左の部分木 -> 根 -> 右の部分木の順で調査を行います。
+根ノードが空のノードになると終了します。
+BST では、ソートされたリスト全体を昇順に辿っていきます。
+
+後順（post-order）（LRN）
+後順走査では、左の部分木 -> 右の部分木 -> 根の順で調査を行います。
+根ノードが空のノードになると終了します。
+この走査法は、最初に子ノードを読み、次に兄弟とその子を左から右に読み取ることを目的としています。
+
+逆間順（reverse-order）（RNL）
+逆間順走査では、右の部分木 -> 根 -> 左の部分木の順で調査を行います。
+根ノードが空のノードになると終了します。
+BST では、ソートされたリスト全体を降順に辿っていきます。
+
+
+これらの走査はすべて再帰関数によって実装することができます。
+では、BST の全てのノードを順番に出力する、間順走査から実装してみましょう。
+再帰呼び出しは次のように定義されています。
+'''python
+
+inOrderTreeWalk(tRoot)
+if tRoot != null
+    inOrderTreeWalk(tRoot.left)
+    print(tRoot.data)
+    inOrderTreeWalk(tRoot.right)
+
+'''
+
+では、これらの走査をサポートするために、二分木のデータ構造を拡張してみましょう。
+まず二分木に printInOrder() メソッドを追加して、間順走査からスタートしましょう。
+また、根ノードの printInOrder() メソッドを呼び出す printSorted() をサポートするように BST を拡張します。
+
+'''python
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printInOrder(self):
+        self.inOrderWalk(self)
+        print("")
+
+    def inOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.inOrderWalk(tRoot.left)
+            print(str(tRoot.data), end=' ')
+            self.inOrderWalk(tRoot.right)
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None);
+
+        mid = math.floor((start+end)/2)
+
+        left = None;
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return None
+
+    def printSorted(self):
+        self.root.printInOrder()
+
+balancedBST = BinarySearchTree([1,2,3,4,5,6,7,8,9,10,11])
+balancedBST2 = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+balancedBST.printSorted()
+balancedBST2.printSorted()
+'''
+
+以下、同じように前順走査、後順走査、逆間順走査をサポートするようにデータ構造を実装します。
+
+
+前順走査
+'''python
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printPreOrder(self):
+        self.preOrderwalk(self)
+        print("")
+
+    # 前順（pre-order）（NLR）
+    def preOrderwalk(self, tRoot):
+        if tRoot is not None:
+            print(str(tRoot.data), end = ' ')
+            self.preOrderwalk(tRoot.left)
+            self.preOrderwalk(tRoot.right)
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None);
+
+        mid = math.floor((start+end)/2)
+
+        left = None;
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return None
+
+    def printSorted(self):
+        self.root.printPreOrder()
+
+if __name__ == '__main__':
+    balancedBST = BinarySearchTree([1,2,3,4,5,6,7,8,9,10,11])
+    balancedBST2 = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+    balancedBST.printSorted()
+    balancedBST2.printSorted()
+'''
+
+後順走査
+'''python
+
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printPostOrder(self):
+        self.postOrderWalk(self)
+        print("")
+
+    # 後順（post-order）（LRN）
+    def postOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.postOrderWalk(tRoot.left)
+            self.postOrderWalk(tRoot.right)
+            print(str(tRoot.data), end=' ')
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None);
+
+        mid = math.floor((start+end)/2)
+
+        left = None;
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return None
+
+    def printSorted(self):
+        self.root.printPostOrder()
+
+if __name__ == '__main__':
+    balancedBST = BinarySearchTree([1,2,3,4,5,6,7,8,9,10,11])
+    balancedBST2 = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+    balancedBST.printSorted()
+    balancedBST2.printSorted()
+
+'''
+
+逆間順走査
+'''
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printReverseOrder(self):
+        self.reverseOrderWalk(self)
+        print("")
+
+    # 逆間順（reverse-order）（RNL）
+    def reverseOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.reverseOrderWalk(tRoot.right)
+            print(str(tRoot.data), end=' ')
+            self.reverseOrderWalk(tRoot.left)
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None);
+
+        mid = math.floor((start+end)/2)
+
+        left = None;
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return None
+
+    def printSorted(self):
+        self.root.printReverseOrder()
+
+if __name__ == '__main__':
+    balancedBST = BinarySearchTree([1,2,3,4,5,6,7,8,9,10,11])
+    balancedBST2 = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+    balancedBST.printSorted()
+    balancedBST2.printSorted()
+'''

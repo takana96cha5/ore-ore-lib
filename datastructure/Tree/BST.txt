@@ -1,0 +1,475 @@
+BST「挿入」
+BST に値を挿入するには、BST のプロパティを維持する必要があります。
+まずは、アルゴリズムのコンセプトを確認しましょう。
+Insert(root, v) は、値 v および、根ルートを受け取り、
+v を挿入した新しい BST の根ルートを返します。
+BST を辿りながら、各ノードで左に辿るか右に辿るかを判断して、
+v を挿入する葉ノードを見つけることを目的としています。
+v が現在のノードの値よりも大きければ、右に辿り、
+値が小さい場合は、左に辿ります。
+
+葉ノードに到達すると、
+この葉ノード p が v の親ノードとなり、
+v がその子ノードとなります。
+v が親ノードより大きい場合は、v を p の右に挿入し、
+小さい場合は v を p の左に挿入します。
+
+もし親ノードが存在しない場合、
+根ノードが空のノードであることを意味します。
+値 v は新しい BST の根ノードにならなければいけません。
+
+では、実際に BST への挿入を実装してみましょう。
+データ値を受け取り、
+BST プロパティを保持しながら BST に挿入する、insert(value) というメソッドを持つ、
+BST のデータ構造を実装してください。
+
+'''python
+
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printInOrder(self):
+        self.inOrderWalk(self)
+        print("")
+
+    def inOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.inOrderWalk(tRoot.left)
+            print(str(tRoot.data), end=' ')
+            self.inOrderWalk(tRoot.right)
+
+
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None);
+
+        mid = math.floor((start+end)/2)
+
+        left = None;
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return None
+
+    def insert(self, value):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data > value and iterator.left == None:
+                iterator.left = BinaryTree(value)
+            elif iterator.data < value and iterator.right == None:
+                iterator.right = BinaryTree(value)
+            iterator = iterator.left if iterator.data > value else iterator.right
+
+
+    def printSorted(self):
+        self.root.printInOrder()
+
+if __name__ == '__main__':
+    balancedBST = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+    balancedBST.printSorted()
+    balancedBST.insert(5)
+    balancedBST.printSorted()
+    balancedBST.insert(47)
+    balancedBST.printSorted()
+    # 0をinsertします。
+    balancedBST.insert(0);
+    balancedBST.printSorted()
+
+'''
+
+この挿入演算子は、BST のプロパティが維持されることは保証しますが、
+BST が平衡二分探索木であることを保証するものではない点には注意してください。
+
+BST「削除」
+BST からノードを削除するには、挿入の場合と同様に BST プロパティを維持する必要があります。
+
+BST からノードを削除するのは、単にノードを BST に挿入するよりもはるかに厄介です。
+それは、削除しようとしているノードを置き換えるノードを選択し、部分木を正しく移植しなければならないからです。
+
+移植とは、親に連結された子の部分木を別の部分木に置き換えることを意味します。
+置き換えるノードが根ノードであれば、根ノードは目的の部分木に置き換えられます。
+
+二分探索木 T からノード N を削除するには、以下のアルゴリズムに従うことができます。
+ノード N の親はノード P であり、ノード P が null の場合は、N が BST の根ノードを意味することに注意してください。
+
+
+
+BST からノードを削除するアルゴリズム
+
+Case 0:
+T が空の木、あるいはノード N が T に存在しない場合、T を返します。
+
+Case 1:
+ノード N の左側が空の場合、ノード N の右側と P の部分木を置き換えて、部分木を移植します。
+
+Case 2:
+ノード N の右側が空の場合、ノード N の左側と P の部分木を置き換えて、部分木を移植します。
+
+Case 3:
+N が 2 つの部分木を子として持つ場合、移植するために、T の中から N の後続ノード S を見つけます。
+ノード N の値を x とした時、後続ノード S とは木の中に存在する x よりも大きい最小の値を持つノードのことを指します。
+S の値は最小値であるため、左側にノードを持つことはありません。
+S は x よりも大きいため、常に N の右側の部分木の中に存在します。
+
+S の親ノードを SP としましょう。
+
+SP = N の場合、S が N の子であり、右部分木であることを意味します。
+このケースでは単純に N の親である P の部分木と S を移植すれば良いでしょう。
+S は後続ノードであり、x より大きい最小値であるため、定義通り左部分木は常に null です。
+
+SP ≠ N の場合、S が N の右部分木のどこかに存在していることを意味します。
+BST プロパティを維持するために、以下の処理を行います。
+S から SP を S の右部分木で移植します。
+次に S を N に置き換える準備をするために、S の右部分木を N の右部分木に設定します。
+P から N を S で移植します。
+その後、S の左部分木を N の左部分木に設定します。
+
+
+以下のコードの流れを確認してみましょう。
+
+'''
+
+function transplant(root, nodeParent, node, target)
+    if(nodeParent == null) root = target
+    else if(nodeParent.left == node) nodeParent.left = target
+    else nodeParent.right = target
+
+function deleteNode(root, node)
+    if(root == null) return null
+    if(!exists(root,node)) return root
+
+    parent = findParent(root, node)
+    // case 1: ノード N の左が空
+    if(node.left == null) transplant(root, parent, node, node.right)
+    // case 2: ノード N の右が空
+    else if(node.right == null) transplant(root, parent, node, node.left)
+    // case 3: 2 つの子を持っている場合
+    else
+    S = findSuccessor(root, node)
+    SP = findParent(root, successor)
+
+    // case 3 後続ノードSがすぐ右側にいる場合:
+    // この場合、ノード N が後続ノード S の親になっているため、case 4 は必要ありません。
+    // 単純に N の親である P の部分木と S を移植すれば ok です。
+
+    // 特別なケース (case 4) 後続ノード S がすぐ右側にいない場合:
+    // この場合、後続 S の親も変更しなければいけません。
+    if(successor != node.right)
+        // 後続ノード S を S の右部分木で移植します。S をアップデートします。
+        transplant(root, SP, S, S.right)
+        // S の右側はノード N の右側になっている必要があります。
+        S.right = node.right
+
+    // ノード N を後続 S で移植します。S の左部分木をノード N の左部分木にします。
+    transplant(root, parent, node, S)
+    S.left = node.left
+
+'''
+
+キーを受け取り、その値がキーと等しいノードを削除す delete(key) と呼ばれる新しいメソッドを BinarySearchTree に追加してください。
+木の中にキーが存在しない場合、何の削除も行いません。
+
+'''
+
+import math
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printInOrder(self):
+        self.inOrderWalk(self)
+        print("")
+
+    def inOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.inOrderWalk(tRoot.left)
+            print(str(tRoot.data), end=' ')
+            self.inOrderWalk(tRoot.right)
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        sortedList = sorted(arrList)
+        self.root = BinarySearchTree.sortedArrayToBST(sortedList)
+
+    @staticmethod
+    def sortedArrayToBST(array):
+        if len(array) == 0: return None
+        return BinarySearchTree.sortedArrayToBSTHelper(array, 0, len(array)-1)
+
+    @staticmethod
+    def sortedArrayToBSTHelper(arr, start, end):
+        if start == end: return BinaryTree(arr[start], None, None)
+
+        mid = math.floor((start+end)/2)
+
+        left = None
+        if mid-1 >= start: left = BinarySearchTree.sortedArrayToBSTHelper(arr, start, mid-1)
+
+        right = None
+        if mid+1 <= end: right = BinarySearchTree.sortedArrayToBSTHelper(arr, mid+1, end)
+
+        root = BinaryTree(arr[mid], left, right)
+        return root
+
+    def keyExist(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key:return True
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return False
+
+    def search(self, key):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data == key: return iterator
+            if iterator.data > key: iterator = iterator.left
+            else: iterator = iterator.right
+        return None
+
+    def insert(self, value):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data > value and iterator.left == None:
+                iterator.left = BinaryTree(value)
+            elif iterator.data < value and iterator.right == None:
+                iterator.right = BinaryTree(value)
+            iterator = iterator.left if iterator.data > value else iterator.right
+
+    def transplant(self, nodeParent, node, target):
+        if nodeParent == None: self.root = target
+        elif nodeParent.left == node: nodeParent.left = target
+        else: nodeParent.right = target
+
+    def deleteNode(self, key):
+        if self.root == None: return None
+        node = self.search(key)
+        if self.keyExist(key) == False: return self.root
+
+        parent = self.findParent(node)
+        # case 1: ノードNの左が空
+        if node.left == None: self.transplant(parent, node, node.right)
+        # case 2: ノードNの右が空
+        elif node.right == None: self.transplant(parent, node, node.left)
+        # case 3: 2つの子を持っている場合
+        else:
+            successor = self.findSuccessor(node)
+            successorP = self.findParent(successor)
+
+            # case 3 後続ノードSがすぐ右側にいる場合 : この場合、ノードNが後続ノードSの親になっているため、case4は必要ありません。単純にNの親であるPの部分木とSを移植すればokです。
+            # 特別なケース (case 4) 後続ノードSがすぐ右側にいない場合 : この場合、後続Sの親も変更しなければいけません。
+            if successor != node.right:
+                # 後続ノードSをSの右部分木で移植します。Sをアップデートします。
+                self.transplant(successorP, successor, successor.right)
+                # Sの右側はノードNの右側になっている必要があります。
+                successor.right = node.right
+
+            # ノードNを後続Sで移植します。Sの左部分木をノードNの左部分木にします。
+            self.transplant(parent, node, successor)
+            successor.left = node.left
+
+    def findParent(self, node):
+        iterator = self.root
+        parent = None
+        while iterator != node:
+            parent = iterator
+            iterator = iterator.left if iterator.data > node.data else iterator.right
+        return parent
+
+    def findSuccessor(self, node):
+        # 部分木
+        targetNode = node
+        # keyがBST内に存在しない場合、nullを返します。
+        if targetNode == None: return None
+        # keyのノードの右にある最小値を探します。
+        if targetNode.right != None: return self.minimumNode(targetNode.right)
+
+        successor = None
+        iterator = self.root
+
+        while iterator != None:
+            if targetNode.data == iterator.data: return successor
+            # successorを左方向へずらしていきます。
+            if targetNode.data < iterator.data and (successor == None or iterator.data < successor.data): successor = iterator
+            if targetNode.data < iterator.data: iterator = iterator.left
+            else: iterator = iterator.right
+
+        return successor
+
+
+    def minimumNode(self, node):
+        iterator = node
+        while iterator != None and iterator.left != None: iterator = iterator.left
+        return iterator
+
+    def printSorted(self):
+        self.root.printInOrder()
+
+if __name__ == '__main__' :
+    balancedBST = BinarySearchTree([4,43,36,46,32,7,97,95,34,8,96,35,85,1010,232])
+    balancedBST.printSorted()
+    balancedBST.deleteNode(43)
+    balancedBST.printSorted()
+    balancedBST.deleteNode(7)
+    balancedBST.printSorted()
+    balancedBST.deleteNode(4)
+    balancedBST.printSorted()
+    balancedBST.deleteNode(1010)
+    balancedBST.printSorted()
+    # 存在しない0をdeleteNodeします。
+    balancedBST.deleteNode(0)
+    balancedBST.printSorted()
+
+'''
+
+BST「ランダム構築」
+insert 関数と delete 関数の両方を学んだところで、今度はランダムに構築される BST を作成してみましょう。
+
+この BST は区別された n 個の値のリストを受け取り、ランダムにシャッフルします。
+この時、n! 通りの中から 1 つの組み合わせが選択される確率は同様に確からしいとします。
+
+insert() 関数のみを使用して、空の BST に挿入し、平均の高さが O(logn) である平衡二分探索木を作成してください。
+この分析に関する証明は、Javed A. Aslam という人物によって行われました。
+
+受け取った配列をシャッフルし、insert メソッド使って要素を 1 つずつ空の二分探索木に挿入していきます。
+シャッフルすることで、根ノードの選択をランダムにすることができ、平均の高さが O(logn)に近づきます。
+
+例えば [1,2,3,4,5] という配列があった時、根ノードを 1 として順に二分探索木を作成すると、2 から 5 まで全て右側の子となってします。
+これは高さが O(n) となり非常に効率の悪い構造ですが、
+このような構造になるのは [1,2,3,4,5] と [5,4,3,2,1] の 2 通りしかありません。
+その確率は 2/5! となり要素数が増えるほど低くなります。
+
+'''
+
+# 受け取った配列をシャッフルし、insertメソッド使って要素を1つずつ空の二分探索木に挿入していきます。シャッフルすることで、根ノードの選択をランダムにすることができ、平均の高さがO(logn)に近づきます。
+# 例えば[1,2,3,4,5]という配列があった時、根ノードを1として順に二分探索木を作成すると、2 から 5 まで全て右側の子となってします。これは高さがO(n)となり非常に効率の悪い構造ですが、このような構造になるのは[1,2,3,4,5]と[5,4,3,2,1]の2通りしかありません。その確率は 2/5! となり要素数が増えるほど低くなります。
+
+import math
+import random
+
+class BinaryTree:
+    def __init__(self, data, left = None, right = None):
+        self.data = data
+        self.left = left
+        self.right = right
+
+    def printInOrder(self):
+        self.inOrderWalk(self)
+        print("")
+
+    def inOrderWalk(self, tRoot):
+        if tRoot is not None:
+            self.inOrderWalk(tRoot.left)
+            print(str(tRoot.data), end=' ')
+            self.inOrderWalk(tRoot.right)
+
+class BinarySearchTree:
+    def __init__(self, arrList):
+        self.generateRandomBST(arrList)
+
+    # 受け取った配列をシャッフルしてBSTを作る関数を作ります。
+    def generateRandomBST(self, arrList):
+        if not arrList:
+            self.root = None
+        else:
+            BinarySearchTree.shuffle(arrList)
+            self.root = BinaryTree(arrList[0])
+            for i in range(len(arrList)):
+                #　シャッフルした配列の要素を一つずつinsertでBSTに挿入します。
+                self.insert(arrList[i])
+
+    def insert(self, value):
+        iterator = self.root
+        while iterator is not None:
+            if iterator.data > value and iterator.left == None:
+                iterator.left = BinaryTree(value)
+            elif iterator.data < value and iterator.right == None:
+                iterator.right = BinaryTree(value)
+            iterator = iterator.left if iterator.data > value else iterator.right
+
+    # in-placeでシャッフルする関数
+    @staticmethod
+    def shuffle(list) :
+        for i  in range(len(list)- 1, -1, -1) :
+            j = math.floor(random.randint(0, i +1))
+            [list[i], list[j]] = [list[j], list[i]]
+
+
+        return list;
+
+    @staticmethod
+    def maximumDepth(root) :
+        if root == None: return 0
+        leftdepth = BinarySearchTree.maximumDepth(root.left)
+        rightdepth = BinarySearchTree.maximumDepth(root.right)
+        return rightdepth+1 if rightdepth > leftdepth else leftdepth+1
+
+    def printSorted(self):
+        if self.root == None: return;
+        self.root.printInOrder()
+
+# 昇順に並んだ配列を作る関数
+class RandomContainer :
+    @staticmethod
+    def generateList(size) :
+        list = []
+        for i in range(size) :
+            list.append(i)
+
+        return list
+
+if __name__ == '__main__':
+    list = RandomContainer.generateList(256)
+    balancedBST = BinarySearchTree(list)
+    balancedBST.printSorted()
+
+    print(16*16) # 256   要素数が増えると高さが log2n に近づきます。
+    print("MaxDepth: " + str(BinarySearchTree.maximumDepth(balancedBST.root)))
+
+    list2 = []
+    balancedBST2 = BinarySearchTree(list2)
+    balancedBST2.printSorted()
+    print("MaxDepth: " + str(BinarySearchTree.maximumDepth(balancedBST2.root)))
+
+'''
