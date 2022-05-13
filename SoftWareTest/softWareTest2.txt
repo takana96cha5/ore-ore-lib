@@ -1,0 +1,691 @@
+ホワイトボックステスト
+プログラムのテストには、
+ブラックボックステスト（外部）とホワイトボックステスト（内部）の 2 つの方法があります。
+
+内部コンポーネントが完全に無視され、
+全体的な入力と出力にのみ焦点が当てられるテスト方法はブラックボックステストと呼ばれます。
+ブラックボックステストはプログラム全体の目的に厳密に基づいてテスト基準を構築するため、
+内部要素は無視されます。
+softWareTest.txt の chooseStudent 関数に対するテストは、
+まさにこれを行っていると言えるでしょう。
+テストケースでは、最年少で最も背が高い学生が返されるかどうかのみに焦点が当てられていました。
+
+input ---> [ブラックボックス] ---> output
+
+コードを内部的に見ると、
+コードの各部分は、ある 1 つの目的に向かって構築された相互作用を持つ部品とみなすことができ、
+ホワイトボックステストはこの概念に基づいています。
+プログラムのすべての内部コンポーネントを把握し、
+それらのすべての内部コンポーネントをチェックするテストが構築されている場合、
+それはホワイトボックステストを行っていることになります。
+
+input ---> [add] ---> output
+        ホワイトボックス
+
+ホワイトボックステストでは、テスト基準はコードに関する知識に基づいて形成されます。
+
+
+では先ほどの chooseStudent に関するコードを見てみましょう。
+今回、オプションで最小ヒープアルゴリズムを使用し、
+リストをヒープ化して、最初の k 人の学生を選択するようにしました。
+しかし、これは in-place アルゴリズムの入力の配列が変更され、
+副作用が発生します。
+この処理を以下のコードで見てみましょう。
+
+'''
+
+import random
+
+class Student:
+    def __init__(self, studentId, grade, name, age, height):
+        self.studentId = studentId
+        self.grade = grade
+        self.name = name
+        self.age = age
+        self.height = height
+
+    def __str__(self):
+        return f"ID: {self.studentId}...{self.name}, grade:{self.grade}, age {self.age}, height {self.height}"
+
+studentList1 = [
+    Student(1000,9,"Matt Verdict", 14, 5.5),
+    Student(1001,9,"Amy Lam", 14, 5.5),
+    Student(1002,10,"Bryant Gonzales", 15, 5.9),
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.8),
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1000, 1001, 1002, 1004, 1003,1005]
+
+studentList2 = [
+    Student(1000,9,"Matt Verdict", 14, 5.5),
+    Student(1001,9,"Amy Lam", 13, 5.5),# 変更され、13歳
+    Student(1002,10,"Bryant Gonzales", 15, 5.9),
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.8),
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1001, 1000, 1002, 1004, 1003,1005]
+
+def printStudents(students):
+    print("----Total students: "+str(len(students))+"----")
+    for student in students: print(student)
+    print("---END---")
+
+# 最年少かつ最も高い生徒をk人返します。kはオプションでデフォルトは1になります。
+def chooseStudent(studentList, k = 1):
+    # ラムダの比較
+    # s1がs2より若く、背が高いかどうかを返します。もし、同じならs1とs2のIDを比較します。
+    def studentCompare(s1, s2):
+        if s1.age == s2.age:
+            return s1.studentId < s2.studentId if s1.height == s2.height else s1.height > s2.height
+        return s1.age < s2.age
+
+    # studentListをheapifyし、最初のk個の要素をpopします。
+    def heapify(l):
+        for index in reversed(range(0, len(l)//2)):
+            minHeap(l, index)
+
+    def swap(arr, i,j):
+        temp = arr[i]
+        arr[i] = arr[j]
+        arr[j] = temp
+
+    def minHeap(l, index):
+        lengthL = len(l)
+        curr = index
+        flag = True
+        while flag:
+            left = curr * 2 + 1
+            right = curr * 2 + 2
+            smallest = curr
+
+            if lengthL > left and not studentCompare(l[smallest], l[left]): smallest = left
+            if lengthL > right and not studentCompare(l[smallest], l[right]): smallest = right
+
+            if smallest == curr: flag = False
+            else: swap(studentList, curr, smallest)
+
+            curr = smallest
+
+    # Heapify studentList
+    heapify(studentList)
+    results = []
+    for i in range(k):
+        # minを最後のノードとswapし、削除します。O(1)
+        swap(studentList, 0, len(studentList)-1)
+        results.append(studentList.pop())
+
+        if len(studentList) > 0: minHeap(studentList, 0)
+        else: break
+    return results
+
+printStudents(studentList1)
+print(chooseStudent(studentList1)[0].studentId == 1000)
+printStudents(studentList1) # 副作用。 一人が減って、idでソートされていた配列もheapifyされてバラバラになりました。
+
+printStudents(studentList2)
+print(chooseStudent(studentList2)[0].studentId == 1001)
+printStudents(studentList2) # 副作用。 一人が減って、idでソートされていた配列もheapifyされてバラバラになりました。
+
+studentList3 = [
+    Student(1000,9,"Matt Verdict", 11, 5.5),# 変更、11歳
+    Student(1001,9,"Amy Lam", 13, 5.5),
+    Student(1002,10,"Bryant Gonzales", 13, 5.5),# 変更、13歳
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.3), # 変更、5.3高さ
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1000, 1001, 1002, 1003, 1004, 1005]
+
+printStudents(studentList3)
+# リスト3から4人を出力します。
+printStudents(chooseStudent(studentList3,4))
+printStudents(studentList3) # 副作用。Christine BryantとMike Allenしか残っていません。
+
+'''
+
+
+in-place による、最小ヒープアルゴリズムは、時間計算量が O(n + k log n) であり、
+空間計算量 O(1) であることと引き換えに、副作用を引き起こしました。
+また、関数の実行が停止した後に studentList が順序付けされる方法も保証されていません。
+このアルゴリズムの代わりに、他の in-place アルゴリズムである quicksort や heapsort を使って、
+時間計算量 O(n log n)、空間計算量 O(1) で、k 個の要素を返すこともできます。
+
+
+入力として与えられたリストがすでに学生番号順に並べられており、
+後の他の計算のためにこの順番を維持したい場合、
+O(n) 個のメモリを犠牲にすることによってディープコピーを行う、
+もしくは何らかの処理を行い、
+その処理の最後でもう一度学生番号順に時間計算量 O(n log n)、空間計算量 O(1) でソートするのが良いでしょう。
+このように、内部構造とプログラムの要件を知ることで、
+テストケースをより効果的に選択することができます。
+これがホワイトボックステストです。
+
+内部構造を把握した上で、ホワイトボックステストを適用することによって、
+単にk人の最年少で背の高い学生が返されるかどうかを判断するのではなく、
+状態が変更されていないことを保証することができます。
+
+新しい chooseStudent(students, k) が正しく、
+状態が変化していないことを保証するテストケースのセットを作成してください。
+入力された配列が学生 ID でソートされており、
+関数の実行が終了した後も、
+学生IDでソートされたままであると仮定します。
+
+
+まず初めに、chooseStudent に渡す前に
+studentList のコピーを作成することによって、
+2 つの学生リストが等しいかどうかを返す
+述語関数 areStudentListsEquals(studentList1, studentList2)
+を作成してください。
+
+
+次に chooseStudent(students, k) 関数を実装し、
+テストケースがすべて合格したことを確認してください。
+ディープコピー(時間計算量 O(n)、 空間計算量 O(n))と
+ヒープデータ構造（時間計算量 O(n + k log n)、 空間計算量 O(1)）、
+もしくは 2 回ソートを行う in-place ソートアルゴリズム（時間計算量 O(n log n)、空間計算量 O(1)）
+を使ってみましょう。
+
+'''
+
+import random
+import copy
+
+class Student:
+    def __init__(self, studentId, grade, name, age, height):
+        self.studentId = studentId
+        self.grade = grade
+        self.name = name
+        self.age = age
+        self.height = height
+
+    def __str__(self):
+        return f"ID: {self.studentId}...{self.name}, grade:{self.grade}, age {self.age}, height {self.height}"
+
+studentList1 = [
+    Student(1000,9,"Matt Verdict", 14, 5.5),
+    Student(1001,9,"Amy Lam", 14, 5.5),
+    Student(1002,10,"Bryant Gonzales", 15, 5.9),
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.8),
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1000, 1001, 1002, 1004, 1003,1005]
+
+studentList2 = [
+    Student(1000,9,"Matt Verdict", 14, 5.5),
+    Student(1001,9,"Amy Lam", 13, 5.5),# 変更され、13歳
+    Student(1002,10,"Bryant Gonzales", 15, 5.9),
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.8),
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1001, 1000, 1002, 1004, 1003,1005]
+
+def printStudents(students):
+    print("----Total students: "+str(len(students))+"----")
+    for student in students: print(student)
+    print("---END---")
+
+# 2 つの学生リストが等しいかどうかを返す述語関数
+def areStudentListsEquals(studentList1, studentList2) :
+    if len(studentList1) != len(studentList2): return False
+    for i in range(len(studentList1)):
+        if studentList1[i].studentId != studentList2[i].studentId or studentList1[i].grade != studentList2[i].grade or studentList1[i].name != studentList2[i].name or studentList1[i].age != studentList2[i].age or studentList1[i].height != studentList2[i].height: return False
+    return True
+
+# 最年少かつ最も高い生徒をk人返します。kはオプションでデフォルトは1になります。
+def chooseStudent(studentListMain, k = 1):
+    # Deep copy
+    studentList = copy.deepcopy(studentListMain)
+    # ラムダの比較
+    # s1がs2より若く、背が高いかどうかを返します。もし、同じならs1とs2のIDを比較します。
+    def studentCompare(s1, s2):
+        if s1.age == s2.age: return s1.studentId < s2.studentId if s1.height == s2.height else s1.height > s2.height
+        return s1.age < s2.age
+
+    # studentListをheapifyし、最初のk個の要素をpopします。
+    def heapify(l):
+        for index in reversed(range(0, len(l)//2)):
+            minHeap(l, index)
+
+    def swap(arr, i,j):
+        temp = arr[i]
+        arr[i] = arr[j]
+        arr[j] = temp
+
+    def minHeap(l, index):
+        lengthL = len(l)
+        curr = index
+        flag = True
+        while flag:
+            left = curr * 2 + 1
+            right = curr * 2 + 2
+            smallest = curr
+
+            if lengthL > left and not studentCompare(l[smallest], l[left]): smallest = left
+            if lengthL > right and not studentCompare(l[smallest], l[right]): smallest = right
+
+            if smallest == curr: flag = False
+            else: swap(studentList, curr, smallest)
+
+            curr = smallest
+
+    # Heapify studentList
+    heapify(studentList)
+    results = []
+    for i in range(k):
+        # minを最後のノードとswapし、削除します。O(1)
+        swap(studentList, 0, len(studentList)-1)
+        results.append(studentList.pop())
+
+        if len(studentList) > 0: minHeap(studentList, 0)
+        else: break
+    return results
+
+
+# studentListをコピーします。
+copyStudentList1 = copy.deepcopy(studentList1)
+print(chooseStudent(studentList1)[0].studentId == 1000)
+print(areStudentListsEquals(studentList1, copyStudentList1))
+
+copyStudentList2 = copy.deepcopy(studentList2)
+print(chooseStudent(studentList2)[0].studentId == 1001)
+print(areStudentListsEquals(studentList2, copyStudentList2))
+
+studentList3 = [
+    Student(1000,9,"Matt Verdict", 11, 5.5),# 変更、11歳
+    Student(1001,9,"Amy Lam", 13, 5.5),
+    Student(1002,10,"Bryant Gonzales", 13, 5.5),# 変更、13歳
+    Student(1003,9,"Kimberly York", 15, 5.3),
+    Student(1004,11,"Christine Bryant", 15, 5.3), # 変更、5.3高さ
+    Student(1005,10,"Mike Allen", 16, 6.2),
+]
+# 最年少かつ最も高い生徒: [1000, 1001, 1002, 1003, 1004, 1005]
+printStudents(studentList3)
+# リスト3から4人を出力します。
+printStudents(chooseStudent(studentList3,4))
+printStudents(studentList3)
+
+'''
+
+アサーション
+アサーション（assertion）は、開発者がプログラムを意図的に停止させたり、
+何かが正しくない場合にエラーを強制的に発生させたりすることができる、
+シンプルかつ強力でよく使われるテストツールです。
+
+アサーションは述語関数であり、アサーションが true を返す限り、
+プログラムは通常通りに実行を続けます。
+一方、アサーションが false を返す場合は、アサーションエラーが発生し、
+プログラムのクラッシュおよび停止が行われます。
+
+アサーションはプログラミング言語内に組み込まれた関数です。
+ブーリアン値を受け取り、それが false の場合はエラーが発生し、
+プログラムがクラッシュします。
+エラーが発生した時は、
+プログラミング言語はエラーの箇所やコールスタックの様子など、
+エラーに関する詳細情報を提供します。
+
+では、お金を整数に変換する関数に対するアサーションを見てみましょう。
+この変換では、第三小数点で丸め、y.xx という形にし、10² を掛けることによって整数にします。
+数値の丸め方にはさまざまな方法がありますが、多く請求できる四捨五入が頻繁に使われます。
+例えば、20.435 は四捨五入で 2044 になり、8.465 は 847 になります。
+
+しかし、バンカーズラウンディング（銀行家の丸め）という方法も小数を丸める方法としてよく使われます。
+バンカーズラウンディングでは、「端数が 0.5 のとき、切り上げと切り下げの結果が偶数の方に丸める」という方法を採用しています。
+例えば、20.345 は 2034 もしくは 2035 のうち、偶数の方である 2034 に丸められます。
+54.075 では、5407 もしくは 5408 のうち、5408 に丸められます。
+
+数値	四捨五入	バンカーズラウンディング
+0.5	1	0
+1.5	2	2
+2.5	3	2
+3.5	4	4
+4.5	5	4
+5.5	6	6
+
+また、プログラミング言語はこの丸めを保証することはできません。
+20.445 のような数値は、
+浮動小数点の制限によって、
+2044 ではなく、2045 に丸められます。
+これはバグではなく、float 型の制限によるものです。
+
+'''Python
+
+def formatDecimal(num):
+    # round関数は、バンカーズラウンディングを使用します。
+    result = int(round(num,2) * 100)
+    print(f"rounding {num}....{result}")
+    return result
+
+assert(formatDecimal(86.258) == 8626)
+assert(formatDecimal(86.253) == 8625)
+
+
+# 四捨五入が目標です。
+# しかし、Pythonのround関数は、バンカーズラウンディングを使用します。
+assert(formatDecimal(20.355) == 2036)
+assert(formatDecimal(20.345) == 2034)
+# Assertion Error
+assert(formatDecimal(54.075) == 5408)
+assert(formatDecimal(54.065) == 5406)
+# Assertion Error
+
+assert(formatDecimal(54.775) == 5477)
+# Assertion Error バンカーズラウンディングで5478になるにもかかわらずエラーになります。
+# これはバグではなく、float型の制限によるものです。
+
+'''
+
+では、四捨五入のアルゴリズムを適用してエラーを解消してみましょう。
+浮動小数点数ではなく文字列のように動作する 10 進数ライブラリを追加して、四捨五入を行います。
+
+'''
+import decimal
+
+def formatDecimal(num):
+    # 10進数モジュールによって四捨五入を行います。
+    result = decimal.Decimal(str(num)).quantize(decimal.Decimal('.01'), decimal.ROUND_HALF_UP) * 100
+    print(f"rounding {num}....{result}")
+    return result
+
+if __name__ == '__main__':
+    # 全てのケースがパスします。
+    assert(formatDecimal(86.258) == 8626)
+    assert(formatDecimal(86.253) == 8625)
+    assert(formatDecimal(20.355) == 2036)
+    assert(formatDecimal(20.345) == 2035)
+    assert(formatDecimal(54.075) == 5408)
+    assert(formatDecimal(54.065) == 5407)
+    assert(formatDecimal(54.775) == 5478)
+
+    # 追加のケース
+    assert(formatDecimal(45.465) == 4547)
+    assert(formatDecimal(45.555) == 4556)
+    assert(formatDecimal(31.135) == 3114)
+    assert(formatDecimal(30.125) == 3013)
+
+'''
+
+汎用テスト関数
+2 つのデータ値を受け取り、データをログに記録し、
+それらが等しいかどうかをアサーションする汎用のテスト関数を作成してみましょう。
+データが等しくない場合はアサーションエラーが発生します。
+
+'''Python
+import decimal
+
+def equalAssertion(a,b):
+    equality = (a == b)
+    print(f"Comparing {str(a)} and {str(b)}..." + ("They are equal." if equality else "Error, they are NOT equal."))
+    # 等しくない場合はクラッシュします。
+    assert equality
+    return True
+
+def formatDecimal(num):
+    # 10進数モジュールは四捨五入を可能にします。
+    result = decimal.Decimal(str(num)).quantize(decimal.Decimal('.01'), decimal.ROUND_HALF_UP) * 100
+    return result
+if __name__ == '__main__':
+    equalAssertion(formatDecimal(86.258), 8626)
+    equalAssertion(formatDecimal(86.253), 8625)
+    equalAssertion(formatDecimal(20.445), 2045)
+    equalAssertion(formatDecimal(20.435), 2044)
+    equalAssertion(formatDecimal(45.465), 4547)
+    equalAssertion(formatDecimal(45.555), 4556)
+    equalAssertion(formatDecimal(31.135), 0) # Error
+    equalAssertion(formatDecimal(30.125), 3013)
+'''
+
+a == b という比較式だけで、2 つのデータが等しいかどうかを判断できない場合があることに注意してください。
+
+例えば，2 つの文字列配列を比較するにはどうしたらよいでしょうか？
+2 つの配列の要素とその順序が等しいとき、
+あるいは 2 つの配列の要素のみが一致しているケースがあるでしょう。
+つまり、A[i] == B[i] のように順番を考慮して比較するべきなのか、
+あるいは、Y を正しい出力の要素の集合として、
+A[i], B[i] ∈ Y のように集合として比較するべきなのかという選択肢があります。
+
+2 つの要素を受け取り、比較するコールバック関数を入力として使うことができます。
+これによって、ラムダ関数を作成したり、
+関数の参照を渡してテストを行うことができます。
+
+例として、2 つの配列を比較して、
+それらが等しいかどうかを判断してみましょう。
+一方は要素の順序を考慮するラムダが含まれ、
+もう一方は順序は考慮しないラムダが含まれます。
+
+'''
+# オプションとしてのコールバック。コールバックは、aがbと等しいかチェックします。
+def equalAssertion(a,b, callback = None):
+    equality = (a == b) if callback is None else callback(a, b)
+    print(f"Comparing {str(a)} and {str(b)}..." + ("They are equal." if equality else "Error, they are NOT equal."))
+    # 等しくなければクラッシュします。
+    assert equality
+    return True
+
+arr1 = [3,4,5,10,2,8,12]
+arr2 = [4,5,3,12,10,8,2]
+arr3 = [4,5,3,12,10,8,2]
+
+def orderedArrayEquality(a,b):
+    if len(a) != len(b): return False
+    for i in range(len(a)):
+        if a[i] != b[i]: return False
+    return True
+
+def unorderedArrayEquality(a,b):
+    if len(a) != len(b): return False
+    aHash = {}
+    bHash = {}
+
+    # カウントアルゴリズムを適用します。
+    for i in range(len(a)):
+        if a[i] in aHash: aHash[a[i]] += 1
+        else: aHash[a[i]] = 1
+
+        if b[i] in bHash: bHash[b[i]] += 1
+        else: bHash[b[i]] = 1
+
+    for key in aHash:
+        if key not in bHash: return False
+        if aHash[key] != bHash[key]: return False
+
+    return True
+
+# 順不同のチェック。pass
+equalAssertion(arr1, arr2, unorderedArrayEquality)
+
+# 順序を考慮したチェック。pass
+equalAssertion(arr2, arr3, orderedArrayEquality)
+
+# 順序を考慮したチェック。fail
+equalAssertion(arr1, arr2, orderedArrayEquality)
+'''
+
+以下のテストケースを作成し、ソリューションを実装してください。
+
+文字列の配列を取り込んで、その配列を in-place で反転させる関数。
+要素の順序は考慮してください。
+A[i] == B[i] を確認する反復ループで整合性を確認します。
+ではどうやって、配列が in-place でソートされているかをチェックすればよいでしょうか？
+'''
+import copy
+import math
+def equalAssertion(a,b, callback = None):
+    equality = (a == b) if callback is None else callback(a, b)
+    print(f"Comparing {str(a)} and {str(b)}..." + ("They are equal." if equality else "Error, they are NOT equal."))
+    # 等しくなければクラッシュします。
+    assert equality
+    return True
+
+# 配列をin-placeで反転させる関数
+def reverseArr(arr):
+    middle = math.floor(len(arr)/2)
+    for i in range(middle):
+        [arr[i],arr[len(arr)-1-i]] = [arr[len(arr)-1-i], arr[i]]
+
+# 要素の順番を考慮して整合性を確認する関数
+def reversedArrayEquality(a,b):
+    if len(a) != len(b): return False
+    for i in range(len(a)):
+        if a[i] != b[len(a)-1-i]: return False
+    return True
+
+if __name__ == '__main__':
+    strArr = ["FIAT", "Mercedes-Benz","CITROËN","BLUEBIRD","Alfa Romeo"]
+    copyArr = copy.deepcopy(strArr)
+    reverseArr(strArr)
+    equalAssertion(strArr, copyArr, reversedArrayEquality)
+'''
+
+メールリストが与えられるので、重複していないメールのみを全て返す関数。
+順序は関係ないので、ハッシュマップを使ってそれらが等しいかどうかをチェックしたり、
+あるいはディープコピーを作成し、両方をソートをして A[i] == B[i] を行うことができます。
+
+'''
+import copy
+import math
+def equalAssertion(a,b, callback = None):
+    equality = (a == b) if callback is None else callback(a, b)
+    print(f"Comparing {str(a)} and {str(b)}..." + ("They are equal." if equality else "Error, they are NOT equal."))
+    # 等しくなければクラッシュします。
+    assert equality
+    return True
+
+# 重複していないメールのみを全て返す関数。
+def createSetList(arr):
+    arrUnique = list(set(arr))
+    return arrUnique
+
+def unorderedArrayEquality(a,b):
+    aHash = {}
+    bHash = {}
+
+    for i in range(len(a)):
+        if a[i] in aHash: aHash[a[i]] += 1
+        else: aHash[a[i]] = 1
+
+    for i in range(len(b)):
+        if b[i] in bHash: bHash[b[i]] += 1
+        else: bHash[b[i]] = 1
+
+    for key in aHash:
+        if key not in bHash: return False
+    return True
+
+if __name__ == '__main__':
+    emailArr = ["aaa@bbb.com", "bbb@ccc.com", "ccc@ddd.com", "aaa@bbb.com", "ccc@bbb.com"]
+
+    copyArr = copy.deepcopy(emailArr)
+    setArr = createSetList(emailArr)
+    equalAssertion(copyArr, setArr, unorderedArrayEquality)
+'''
+
+寄付金のリストが与えられるので、一番高い寄付金を決める関数。
+同じ価格の寄付金が複数ある場合は、いずれかの寄付金を返します。
+それぞれの寄付金には、name、price、donationNumber、購入日の状態が含まれています。
+正しい寄付金は、寄付金の価格に基づいて決定されます。
+したがって、a.price と b.price が等しいとき、同じ寄付金とみなされます。
+
+'''
+import datetime
+
+class Donation:
+    def __init__(self, name, price,donationNumber, day, month, year) :
+        self.name = name
+        self.price = price
+        self.donationNumber = donationNumber
+        self.donationDay = datetime.date(year, month, day)
+
+    def __str__(self):
+        return f'name: {self.name}, price:{self.price}, donationNumber {self.donationNumber}, day {self.donationDay}'
+
+donationList = [
+    Donation("Steve Jobs", 50000, 1, 21, 3, 2021),
+    Donation("Bill Gatess", 40000, 2, 2, 9, 2021),
+    Donation("Mark Elliot Zuckerberg", 40000, 3, 29, 4, 2021),
+    Donation("Jeffrey Preston Bezos", 50000, 4, 1, 2, 2021),
+    Donation("Steve Jobs", 10000, 5, 19, 5, 2021),
+]
+
+
+def equalAssertion(a,b, callback = None):
+    equality = (a == b) if callback is None else callback(a, b)
+    print(f"Comparing {str(a)} and {str(b)}..." + ("They are equal." if equality else "Error, they are NOT equal."))
+
+    assert equality
+
+# 一番高い寄付金を決める関数
+def highestDonation(arr) :
+    highest = max(donationList, key=(lambda x: x.price))
+    return highest
+
+# 寄付金が同じ額か調べる関数
+def checkSameDonation(d1, d2):
+    return d1.price == d2.price
+
+if __name__ = __main__:
+    # 寄付金の金額で昇順にソートしたリスト
+    sortedList = list(sorted(donationList, key = lambda x: x.price))
+
+    highest = highestDonation(donationList)
+    equalAssertion(sortedList[-1], highest, checkSameDonation)
+'''
+
+
+
+equalAssertion 関数は、
+2 つのデータが等しいかどうかをチェックする方法の1つに過ぎません。
+a == b のケースだけでなく、データの範囲をテストしたり、
+大小比較等の比較ロジックを適用したい場合もあるでしょう。
+
+
+入力や出力が有効であることをテストすることは重要であり、
+これはデータ検証と呼ばれます。
+通常、これらの述語はその場で構築されるか、
+定義済みの関数が再利用されます。
+
+
+では、データと述語を受け取る、
+より汎用的なアサーションを構築してみましょう。
+多くのアプリケーションで使われる、
+与えられた文字列がメールであるかどうかチェックするテストを見てみましょう。
+
+'''Python
+def assertionTest(a, callback):
+    result = callback(a)
+    print(f"Checking against {str(a)}, is it valid?...{result}")
+    assert result
+    return True
+
+# emailが有効かテストする述語
+# 有効なemailとは空白のスペースがなく、@を含み、@の後に.が含まれる文字列を指します。
+def isValidEmail(email):
+    if email.find(" ") >=0 or email.find("@") == -1 or email[email.find("@")+1:len(email)].find("@") != -1: return False
+    if email[email.find("@")+1:len(email)].find(".") == -1: return False
+    return True
+
+if __name__ == '__main__':
+    assertionTest("johnnyTest@test.com",isValidEmail)
+    assertionTest("John Test",isValidEmail) # Error
+
+    # 以下、数値が平方数かどうかをテストし、認証チェックを行う関数を作成してください。
+'''
+
+まとめ
+プログラムが意図した通りに動作するかどうかを発見するために、プログラムを実行する処理のことを（　　）という。
+
+ソフトウェアテスト
+
+要件を見てテストケースに変換し、それにパスするためにコードを開発するという考え方に基づいた開発をテスト駆動開発（TDD）という。
+
+プログラムが持つべき機能と、それがどのように動作するべきかをまとめた条件や機能を要件という。
+
+内部コンポーネントが完全に無視され、全体的な入力と出力にのみ焦点が当てられるテスト方法をブラックボックステストといい、
+プログラムの全ての内部コンポーネントを知っており、それらの全ての内部コンポーネントをチェックするテストをホワイトボックステストという。
+
+開発者がプログラムを意図的に停止させたり、何かが正しくない場合にエラーを強制的に発生させたりすることができるテストのことをアサーションという。
+
+2 つのデータ値が等しいか判断する時、a == b という比較式だけでは判断できない場合がある。
