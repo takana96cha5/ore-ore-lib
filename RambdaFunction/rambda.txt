@@ -1,0 +1,983 @@
+ラムダ関数
+この章では、ラムダ関数（lambda function）とは何かを学習し、
+高階関数（higher-order function）の世界に飛び込んでいきます。
+
+今までのコンピュータサイエンスの学習で見てきたように、
+ソフトウェアはデータと関数という 2 つの基本的な構成要素で構成されています。
+情報はデータとして表現され、処理は関数として表現されます。
+データを操作して、これらの処理を行います。
+
+この 2 つの基本要素をパッケージ化することによって、構造体やオブジェクトを作ることができます。
+つまり、状態（データ）と挙動（関数）を持つカスタムデータ構造を構築することができました。
+
+さて今回は、「関数自体を入力として関数に渡し、出力として返すことができるデータ」として扱うことを考えていきます。
+これがラムダ関数であり、高度なデータフローを構成するためには欠かせないものになります。
+
+ラムダ関数を使うと、
+
+サブルーチンの実行、
+数学的自動化処理の構成、
+より多くのコードを構築するコードの生成
+
+等の高度な処理の設計ができるようになります。
+
+
+無名関数
+ラムダ関数とは、関数リテラル（function literal）としてその場で作成される関数のことです。
+匿名関数（anonymous function）、無名関数としても知られています。
+
+関数は通常、コードが実行される前、つまりコンパイル時に宣言され、定義されます。
+関数は関数名にバインドされており、変数のように動作します。
+
+この関数名の内部には、
+メモリ内のコードセグメント（またはテキストセグメント、テキストとも呼ばれる）上に存在する関数の
+最初の命令のメモリアドレスが格納されています。
+関数のすべての命令は連続したメモリにブロックごとに隣り合う形で格納されており、
+コードセグメントと呼ばれる読み取り専用の特別なメモリの場所に存在します。
+この関数名を使えば、命令を簡単に参照してコードのどこでも実行することができます。
+
+関数を作成するもう一つの方法があります。
+ラムダ式（lambda expression）を使うと、リテラルとしてその場で関数を作成することができます。
+ラムダ式とは、呼び出し可能関数オブジェクトの参照を返す式のことを指します。
+
+プログラミング言語は実際に無名関数を使ってオブジェクトを生成し、
+ラムダ式の戻り値はこのオブジェクトの参照になります。
+これらのオブジェクトは、関数と同じように呼び出すことができるので、
+呼び出し可能オブジェクト（callable object）としばしば呼ばれます。
+
+では、ラムダ関数を作ってその場で呼び出してみましょう。
+
+'''
+
+# Python
+# その場でリテラルデータ型を作成することができます。
+print(4)
+print(4+6)
+print("Hello" + "World")
+
+# では、ラムダ式を使ってその場で関数を作成してみましょう。呼び出し可能オブジェクトの参照が返されるので、データを返す呼び出しを行うことができます。見ての通り、名前がないので匿名関数と呼ばれています。
+# lambda 入力 : 式
+print(lambda : "a new world")
+print((lambda : "a new world")())
+
+# ラムダ式は呼び出し可能オブジェクトを返します。
+# これらの呼び出し可能オブジェクトを呼び出すと、匿名関数の戻り値と同じように評価される式になります。
+print((lambda: 4+5)()) # 9
+
+# 匿名関数スコープ外の変数にアクセスします。
+p = 40
+print((lambda: p + 10)()) # 50
+print((lambda: "P is " + str(p))() + "......")
+
+# 特定の入力を受け取る匿名関数を作成することができます。通常の関数と同じように、呼び出すときに入力を渡すことができます。
+print("squaring..." + str((lambda x: x*x)(4)))
+
+# pythonラムダは、式のみ使用が出来ます。つまり、変数を定義することが出来ませんが、他のスコープからアクセスができます。
+# しかしpythonでは関数のなかでローカル関数を作成することが出来ます。つまり、この中で定義した関数を戻り値として返すことが出来ます。この場合、戻り値は呼び出し可能オブジェクトです。
+def returnCallable():
+   def f(x):
+      sheeps = ""
+      for i in range(1,x+1):
+         sheeps += str(i) + "sheep~";
+      return sheeps;
+
+   return f
+
+f1 = returnCallable()
+print(f1(5)) # looping...1sheep~2sheep~3sheep~4sheep~5sheep~
+
+'''
+
+これらの呼び出し可能オブジェクトには、他のデータと同様のスコープルールが適用されます。
+つまり、変数に格納したり、関数に渡したり、関数から返したりすることができます。
+
+これらはオブジェクトなので、ヒープに格納され、参照は変数に格納されます。
+呼び出し可能オブジェクトを指しているものが何もない場合（コールスタックからポップされた後に変数がなくなった等）、
+ガベージコレクタによってメモリ内から消去されます。
+つまり、ガベージコレクタはどの変数からも参照されないオブジェクトをメモリから消去します。
+
+'''
+
+# この匿名関数は、どこにも保存されておらず、渡されてもいないので、ガベージコレクタによって後に消去されます。
+# メモリは命令を格納するために作成され、その後解放されます。
+print((lambda x, y: x + y))
+
+# 先程作成した匿名関数は呼ぶことができません。無くなっています。
+# もう一度作成し、呼び出してみましょう。
+print((lambda x, y: x + y)(15,35))
+
+# 呼び出しが行われた後は、なくなってしまいます。もう一度、定義し直す必要があります。
+# 今回は、変数に格納して呼び出してみましょう。呼び出し可能オブジェクトはオブジェクトなのですから。
+myCallable = lambda x,y: x + y
+print(myCallable(3,5))  # 8
+print(myCallable(10,10)) # 20
+print(myCallable(150,5)) # 155
+print(myCallable)
+
+'''
+
+高階関数
+
+ラムダ式で作成した呼び出し可能オブジェクトは、データとして利用することができます。
+また、先ほど見たように、関数としてその場で実行することができ、変数にも格納することができました。
+
+また、呼び出し可能オブジェクトを入力として関数に渡すこともできます。
+これによって、関数内での他の処理に加えて、ラムダ関数を呼び出すことができるようになります。
+
+一方、関数内でラムダ関数を作成して、出力として返すこともできます。
+これによって、保存可能かつ、プログラム実行時に動的に呼び出せるコードを生成することができます。
+
+変数に格納され、入力として渡され、出力として返されるすべてのデータ型は第一級オブジェクト（first-class object）と呼ばれます。
+呼び出し可能オブジェクトは、定義上第一級オブジェクトであり、
+言語がそれをサポートしている場合は、第一級関数（first-class function）もサポートします。
+
+このように、関数を入力として受け取り、関数を出力として返す関数は高階関数と呼ばれます。
+
+では、いくつかの例を見てみましょう。
+呼び出し可能オブジェクトを作成すると、
+その参照が呼び出される関数の仮引数にコピーされるので、
+呼び出し可能オブジェクトにアクセスすることができます。
+
+'''
+
+# この関数は関数の参照を受け取り、ローカルスコープ内で呼び出します。
+def functionInputTest(f):
+   return f() + ".... called from another function!"
+
+print(functionInputTest(lambda: "hello world"))
+
+def fSquaredX(f, x):
+   return f(x*x);
+
+# f(a^2) = a^2 + 30;
+print(fSquaredX((lambda a: a + 30), 5)); # 25 + 30 = 55
+
+# 呼び出し可能オブジェクトを変数内に格納します。
+callable1 = lambda p: "p is " + str(p)
+
+print(fSquaredX(callable1,10)) #p is 100
+print(fSquaredX(callable1,8)) #p is 64
+
+'''
+
+ラムダ関数を使って、 Σ と Π を定義してみましょう。
+'''
+
+def summation(g, a, b):
+   if b < a: return 0
+   return g(b) + summation(g, a, b-1)
+
+# 10までの総和
+# 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 55
+identity = lambda i: i
+print(summation(identity, 1, 10))
+
+# 10 * 100 の計算
+print(summation((lambda i: 10), 1, 100)); # 100 * 10
+
+def pPi(g,a,b):
+   if b < a: return 1
+   return g(b) * pPi(g, a, b-1)
+
+
+# 10の階乗(10!)
+print(pPi(identity, 1, 10)) #3,628,800
+
+# 5^10 の計算
+print(pPi((lambda i: 5), 1, 10))
+
+'''
+
+では、次に関数を返すケースを見てみましょう。
+
+
+このケースでは関数は入力を受け取り、複数の処理を行い、戻り値として呼び出し可能オブジェクトを生成します。
+そして、この呼び出し可能オブジェクトは保存したり、実行したり、他の関数に渡したり、自由自在に操作をすることができます。
+
+'''
+
+def helloFunction():
+    return lambda: "hello world"
+
+# この関数は関数を返します。
+print(helloFunction())
+
+# 戻り値としてのこの関数を実行するか、保存することができます。
+print(helloFunction()())
+outputF = helloFunction()
+print("Running a function that was generated...." + outputF())
+
+# 数値xを取り込み、その後xと入力を乗算する関数を返します。
+def constantMultiplication(x):
+    return lambda y: y * x
+
+multiplyBy4 = constantMultiplication(4);
+print(multiplyBy4(3))  # 3*4 = 12
+print(multiplyBy4(10))  # 10*4 = 40
+print(multiplyBy4(5))  # 5*4 = 20
+
+'''
+
+最後に注意すべきことは、高階関数は必ずしも無名関数を入力として受け取る必要はないということです。
+単純に関数への参照を渡すこともできます。 では、具体例を見てみましょう。
+
+'''
+
+import string
+import random
+
+def greeting(name):
+    return "Hello there " + name
+
+def nameGenerator():
+    data = string.digits + string.ascii_lowercase
+    return ''.join([random.choice(data) for _ in range(10)])
+
+def multiCall(f, fInputF, message):
+    return f(fInputF()) + "......" + message
+
+print(multiCall(greeting, nameGenerator, "Thank you"))
+
+'''
+
+次の章から、ラムダ関数や高階関数を含むツールやパターンを深く掘り下げていきます。
+処理を自動化するコールバックやマッピング関数を扱うことから始め、
+クロージャやデコレータというものについて学習します。
+
+
+まとめ
+関数リテラルとしてその場で作成される関数のことを無名関数という。
+
+関数の全ての命令は、連続したメモリにブロックごとに隣り合う形で格納されており、
+コードセグメントと呼ばれる読み取り専用の特別なメモリの場所に存在する。
+
+関数と同じように呼び出すことができるオブジェクトを呼び出し可能オブジェクトという。
+
+呼び出し可能オブジェクトはヒープに格納され、その参照は変数に格納される。
+
+変数に格納され、入力として渡され、出力として返される全てのデータ型を第一級オブジェクトという。
+
+関数を入力として受け取り、関数を出力として返す関数を高階関数という。
+
+
+
+
+コールバック
+関数 F が関数 C を入力として受け取り、F が実行中のどこかで C を呼び出す場合、
+C はコールバック関数（callback function）と呼ばれます。
+関数 C はすぐに実行されることもあれば、非同期関数のように後で呼び出されることもあります。
+
+input -> [関数] => λ -> [関数] => λ -> [関数] => λoutput
+->: 入力
+=>: コールバック
+
+関数 F 内の最初の命令から最後の命令までのどこかで関数Cが呼び出された場合、
+関数 C の処理が終了するまで関数 F が待ってから関数 F が戻り値を返す、
+つまり関数 F と関数 C の処理は同期して行われるため、
+C は同期型コールバック（synchronous callback）と呼ばれます。
+
+同期型コールバック
+<関数F 呼び出し> <関数C 呼び出し> <関数C return> <関数F return>
+|                   |_______________|               |
+|___________________________________________________|
+
+
+一方、関数 F が関数 C をどこかで呼び出しますが、
+関数 F の処理は、関数 C の終了を待たない、
+つまり関数 F の処理は関数 C の処理と同期しないため、
+C は非同期型コールバック（asynchronous callback）と呼ばれます。
+
+非同期型コールバック
+同期型コールバック
+<関数F 呼び出し> <関数C 呼び出し> <関数F return> <関数C return>
+|                   |_______________|______________|
+|___________________________________|
+
+関数F が 関数C の終了の処理を待たない
+
+
+ここまで、私たちは同期型コールバックを見てきました。
+これらは、関数 F 内で、特定の入力で呼び出され、
+戻り値がさらなる計算に使用される、
+典型的なコールバックでした。
+
+関数 F で同期型コールバックが渡されたとき、
+必ず同期型コールバックの実行が終了してから、
+関数Fがデータを返す処理か関数を終了する処理を行う点に注意してください。
+
+そうでない場合は、関数 F がデータを返した後でも、
+関数 C の処理がまだ終わっていない可能性があるため、
+非同期型コールバックとなります。
+非同期関数とその制御フローについては、別のセクションで詳しく説明します。
+
+簡単な同期型コールバックは以下のようになります。
+
+'''
+def synchronousFunction(f, x):
+    results = f(10)
+    return f(x) + f(x * x) + results
+
+
+def printSynchronous():
+    def f(x):
+        print("Call on " + str(x))
+        return int(x / 2)
+
+    return f
+
+print(synchronousFunction(printSynchronous(), 254))
+'''
+
+高階関数は、関数の処理とコールバックのやりとりそのものです。
+そのため、コールバックを扱う際には、その関数がコールバックで何をするのか、
+どのような入力をコールバックに渡すのかを理解しておくことが重要です。
+
+コールバックの戻り値が関数にとって重要な場合もあれば、
+コールバックの入力を生成して、コールバックを呼び出すタイミングを決定する関数の処理が重要である場合もあります。
+
+コールバックを受け取るすべての関数は、
+コールバックが受け取る入力の数と種類を
+ドキュメンテーション、コメントアウト、および static 言語の宣言で
+指定しなければいけません。
+
+リスト反復処理
+リストとラムダ式を使用して、リスト内の各要素に関数を適用することができます。
+これは、リスト全体に対して反復処理を適用するのと似ています。
+それでは例を見てみましょう。
+
+'''
+def forEach(f, arr):
+    for i in arr: f(i)
+
+forEach((lambda num: print(num)), [2, 3, 4, 5])
+
+# 通常のfor loop
+def simpleLoop():
+    l = [3, 4, 5, 6, 6, 10]
+    counter = 0
+    for i in l: counter += i * i
+    return counter
+
+def loopDifferent():
+    l = [3, 4, 5, 6, 6, 10]
+
+    counter = 0
+
+    def forEach(f, arr):
+        for ele in arr:
+            # fでnonlocalが使用されて、親スコープ変数(counter)にアクセスすることができます。自由度はありますが、この方法でラムダを使うと副作用が出ることがあるので注意が必要です。
+            # ここではfを毎度呼び出しています。fに変化があった場合、副作用が発生します。
+            f(ele)
+
+    def counterFunc(x):
+        nonlocal counter
+        counter += x * x
+
+    forEach(counterFunc, l)
+
+    return counter
+
+print(loopDifferent())
+
+def loopDifferentLibrary():
+    l = [3, 4, 5, 6, 6, 10]
+    counter = 0;
+
+    def counterFunc(x):
+        nonlocal counter
+        counter += x * x
+
+    # また、リスト内包を使い、その中でラムダやローカル関数を実行することもできます。
+    # ただし、通常はリスト内包を使用して他のリストを返したり作成したりすることに注意してください。リスト内包は、式で評価された値のリストを返します。[式 for *要素* in *リスト*] と 記述します。式の中では、リストの現在の要素を使用することができます。
+    [counterFunc(i) for i in l]
+    return counter;
+
+print(loopDifferentLibrary());
+'''
+
+通常の for ループとは異なり、
+この関数は完全に別のスコープで実行されることに注意しましょう。
+別のスコープ内では、コールバックのスコープにアクセスできるものは、
+関数が定義された場所や言語のスコープルールによって異なるので、
+副作用に注意が必要になります。
+
+ここでは、リストを反復処理し、
+各ステップでコールバックを適用して
+結果を計算する高階関数を見てみましょう。
+副作用を抑えるために、
+異なるスコープから変数の状態を変更するのではなく、
+結果のみを計算します。
+
+最も一般的な関数は、map、reduce、filter 関数です。
+
+
+リスト反復処理 map
+関数とは、定義的には、2 つの集合、集合 x と集合 y の間の関係のことであり、
+集合 x のそれぞれの要素は、集合 y の要素に 1 つずつ指定されています。
+
+map 高階関数は、入力のセットが出力のセットにマップされる関数マッピングの数学的表現になります。
+高階関数 "map" は、要素 A のリストと関数 f を受け取り、同じ順序で A の各要素について f を適用し、
+生成した新しいリストを出力として返します。
+ここでは、マップデータ構造体と混同しないようにしてください。
+
+map 高階関数の例
+〇〇〇 ---[map{ 〇 -> ◇ }]---> ◇◇◇
+
+リストを取り、リストの各要素を 2 乗する関数にマッピングしてみましょう。
+
+'''
+def myMap(f, arr):
+    results = []
+    for i in arr: results.append(f(i))
+    return results
+
+nums = [1,2,3,4,5,6,7]
+print(nums)
+print(myMap((lambda x: x*x),nums))
+
+# mapで返すのはイテレーター
+print(list(map(lambda x: x*x, nums)))
+'''
+
+言語の中には、リスト内包（list comprehensions）と呼ばれる機能を提供しているものもあります。
+
+'''
+print(range(0,10))
+
+# シンタックスは次のようになります。[計算ステートメント for value in リスト]
+print([x*x for x in range(0,11)])
+
+# 値であるxは、if文によってさらに決定することができます。ifはステートメントを実行する前に実行され、現在のリスト要素がこのifに渡されます。
+# 偶数のみに実行します。
+print([x*x for x in range(0,11) if x % 2 == 0])
+'''
+
+
+リスト反復処理 filter
+filter 高階関数は、述語関数（boolean 値を返す関数）とリストを受け取り、
+それぞれのリスト項目に対して述語を実行して、どれを「フィルタリング」するか削除するかを決定します。
+filter は、同じ順番で true を返した要素で構成される新しいリストを返します。
+
+filter 高階関数の例
+△〇◇ ---[map{ 〇 }]---> 〇
+
+リストを取り込んで、偶数をすべてフィルタリングした例を見てみましょう。この関数は、リストの奇数のみを返します。
+
+'''
+
+def myFilter(predicateF, arr):
+    results = []
+    for i in arr:
+        if predicateF(i) == True: results.append(i)
+    return results
+list1 = [1,2,3,4,5,6,7,8,9,10]
+print(myFilter((lambda x: x%2 != 0), list1))
+
+# filterで返すのはイテレーター
+print(list(filter(lambda x: x%2 != 0, list1)))
+
+'''
+
+リスト反復処理 reduce
+reduce 高階関数は、リスト、コールバック、初期値を受け取り、
+各リスト要素にコールバックを反復的に適用し、最終的に 1 つの値に評価する関数です。
+
+コールバックは、現在の要素と前の要素の戻り値、初期値（最初の要素の時のみ）を受け取り、
+リストは、単一の値に "縮小" されます。
+
+リスト, コールバック, 初期値 ---[ reduce(リスト, コールバック) ]---> 返り値
+
+
+コールバックは、累積値を処理し、次の要素に対して、
+新たな累積値を返す必要があることに注意してください。
+reduce 関数を作成して、階乗の処理を実行してみましょう。
+
+'''
+from functools import reduce
+
+def myReduce(reduceCallback, arr, initial):
+    lastResult = initial
+    for i in arr:
+        result = reduceCallback(i, lastResult)
+        lastResult = result
+    return lastResult
+
+list1 = [1,2,3]
+list2 = [1,2,3,4,5,6,7,8,9,10]
+
+# 3!
+# 1*1 ->1
+# 1*2 ->2
+# 2*3 ->6
+print(myReduce((lambda x, total: x*total), list1, 1))
+# 10!
+print(myReduce((lambda x, total: x*total), list2, 1))
+
+# Pythonには、この処理を行うreduce関数が含まれています。
+# 使用するには "from functools import reduce" の宣言が必要です
+# 初期値が与えられていない場合は、最初の要素の値を初期値とし、2番目の要素から反復を開始します。
+# reduce(累積値, 現在の値)
+print(reduce((lambda x, total: x*total), list2))
+print(reduce((lambda x, total: x*total), list2, 1))
+
+# reduce関数を使って、1からnまでの総和を作成してください。
+
+print(reduce((lambda totalNum, num: totalNum + num), [i for i in range(10)]))
+'''
+
+文字列のリストを reduce 関数を使って結合してみましょう。
+
+'''
+
+from functools import reduce
+
+list1 = ["hello", "world", "and", "hello", "jupiter"]
+# reduce(累積値, 現在の値)
+print(reduce((lambda totalStr, currStr: totalStr + ", " + currStr), list1))
+
+# Pythonには、すべての配列を1つの文字列に結合するためのjoin関数も用意されています。
+print(", ".join(list1))
+
+# joinの逆であるsplitは区切りを取り、区切りに基づいて文字列を配列要素に分割します。
+print(", ".join(list1).split())
+
+'''
+
+reduce は単一のデータ値を返します。
+このデータ値は、リストであっても、データの集合であっても構いません。
+つまり、二次元配列を 1 次元配列に reduce することもできるのです。
+
+[〇〇〇], [◇◇◇] ---[concat]---> [〇〇〇◇◇◇]
+
+'''
+from functools import reduce
+
+array2d = [[2,3,4,5],[5,22,34,4,5],[12,13,45,67,84]]
+
+# 平坦化して1次元配列にします。
+flatten = reduce((lambda flattenList, arr: flattenList+arr), array2d)
+
+print(flatten)
+print(flatten[1])
+'''
+
+ラムダ出力
+ここまでは、ラムダ関数が入力として渡されたときの動作を見てきました。
+ラムダ関数が出力として返される場合を見てみましょう。
+
+関数を作って、それを高階関数の中で返すことができます。
+もし、入力が何であっても常に返される関数が同じ場合、
+通常の関数を定義すればよいのですから、
+この高階関数の処理は全く意味をなさないことになってしまいます。
+
+それでは具体例を見てみましょう。
+
+'''
+# この関数は通常の関数として定義すればよいので、これは無意味です。
+# どのような入力であっても、常に同じ関数が返されます。
+def lambdaHelloWorld(randomInput):
+    print(randomInput + " was passed in but this function always returns the same lambda function")
+    return lambda: "Hello World"
+
+
+def helloWorld():
+    return "Hello World"
+
+
+print(helloWorld())
+print((lambdaHelloWorld("lalilulelo")()))
+'''
+
+ラムダ関数を取得して返すことができるようにすることで、
+ラムダ関数の動的構造を設定することができました。
+そして、独自のルールと構造を適用して、これらのラムダ関数を操作することができます。
+
+ただし、ここで扱うラムダ関数はそのままです。
+これらのラムダ関数は完全にステートレスであり、
+ラムダ関数自体は入力や出力に基づいて変化しません。
+
+では、データをスコープにバインドすることでラムダ関数に状態を与える、
+ラムダクロージャというものを見てみましょう。
+
+
+ラムダクロージャ
+すべての関数は通常ステートレスです。
+メモリ内のデータは、プログラムの開始から終了まで定義されており、
+プログラムがなくなるまでメモリの内容を変更することができない場合には、
+ステートレスとなります。
+メモリ内のステートレスでないものは、すべて状態を持ち、ステートフルになります。
+
+stateless
+〇 ---[]---> ◇
+
+statefull
+〇 ---[]---> ◇
+      ↓↑
+    State
+
+関数名にバインドされている関数は、
+読み取り専用のコードセグメントに格納され、
+これらのセグメントは上書きすることができません。
+これらの関数は完全にステートレスなのです。
+
+ラムダ関数の場合は少し異なります。
+ラムダ関数は式を使って定義できるので、
+関数を作成している間に式のスコープ内外の変数にもアクセスすることができます。
+このスコープには、親スコープ、グローバルスコープ、そしてラムダ関数を作成する際に式がアクセスできるその他のスコープが含まれます。
+
+これはラムダクロージャ（lambda closure）と呼ばれます。
+ラムダクロージャとは、ラムダ式によって作成された、
+変数の状態をラムダのスコープにバインドするステートフル関数のことを指します。
+ラムダ式がスコープ外の変数を含む場合、
+これらの変数とそのデータは作成された関数オブジェクトにカプセル化されます。
+
+関数の呼び出しが終わった後、ローカル変数がコールスタックからポップされるときのように、
+元の変数がメモリからクリアされたとしても、その変数の状態はラムダ関数の中に残ります。
+それはラムダ関数の中に刷り込まれているためです。
+
+では、簡単なラムダクロージャの例を見てみましょう。
+
+州の税率を受け取って、所得を受け取り所得税を計算する関数を返す、関数を作成します。
+
+'''
+
+# 連邦税を設定します。
+federalTaxes = 0.2;
+
+
+# 州の税率を受け取って、所得を受け取り所得税を計算する関数を返す、関数を作成します。
+def taxLambda(stateTax, state):
+    def f(income):
+        # 連邦税、州税の変数はどちらもスコープ外です。
+        # この関数が作成されると、stateTax および federalTaxes の状態が何であれ、この関数にバインドされます。作成時の stateTax が 0.15 である場合、この関数の stateTax の状態は 0.15 になります。
+        taxes = federalTaxes + stateTax
+        # 何かが出力されたときにログを記録し、stateの文字列もバインドします。
+        print("Computing taxes for state..." + state)
+        return int(income - (taxes * income));
+
+    return f
+
+californiaF = taxLambda(0.0725, "California")
+texasF = taxLambda(0.0625, "Texas")
+hawaiiF = taxLambda(0.04, "Hawaii")
+
+# 税金を計算します。
+income = 40000
+print("Calculating income using lambdas")
+print(californiaF(income))
+print(texasF(income))
+print(hawaiiF(income))
+
+income2 = 500000;
+print("------Calculating more income using lambdas------")
+print(californiaF(income2))
+print(texasF(income2))
+print(hawaiiF(income2))
+
+'''
+
+ラムダクロージャは、新しい関数を生成する方法です。
+現在のスコープがアクセスできるあらゆるものの状態を作成または読み込み、
+その状態を作成した新しいラムダ関数に取り付けし、それを返すことができます。
+
+ユーザーは入力を関数に渡すことで、より多くの関数を生成することができ、
+関数は入力に応じて変化します。
+これは、何があっても同じ関数が返されるステートレス関数とは異なるのです。
+
+ラムダクロージャを使って、以下を実装してください。
+
+powerOfNLambda: 整数 n を受け取り、x を受け取り、xn を計算する関数を返してください。
+nDuplicateListLambda: 整数 n を受け取り、リストを受け取り、リストを n 回複製する関数を返します。
+
+'''
+import math
+# 整数nを受け取り、xを受け取り、x^nを計算する関数を返してください。
+def powerOfNLambda(n):
+    def f(x):
+        return math.pow(x, n)
+    return f
+
+print(powerOfNLambda(3)(2))
+
+# 整数nを受け取り、リストを受け取り、リストをn回複製する関数を返します。
+def nDuplicateListLambda(n):
+    def f(list):
+        result = [list for i in range(n)]
+        return result
+    return f
+
+print(nDuplicateListLambda(2)([1,2,3,4]))
+'''
+
+データのコピーを行う言語もあれば、オブジェクトの参照を保持する言語もあります。
+オブジェクトの参照を保存のケースでは副作用に気をつけなければいけません。
+
+ラムダ関数に状態をバインドし、言語がシャローコピー（shallow copy）を行う場合、
+副作用を制限するためにディープコピー（deep copy）することもできます。
+
+シャローコピーとは、参照のみがコピーされることを意味し、
+この場合、2 つのオブジェクトがメモリ上の同じオブジェクトを指します。
+[origin func] --> <メモリ> <-- [shallow copy func]
+
+ディープコピーとは、オブジェクトの完全なコピーを行う場合で、これを実現するには追加でツールや処理が必要になることがあります。
+[origin func] --> <メモリ>     [deep copy func] --> <コピーメモリ>
+
+
+デコレータパターン
+ソフトウェアを構築する際、コードの設計やリファクタリングは重要な作業です。
+開発者は、一般的なプラクティスやパターンに従って、問題を効率的に解決しようとします。
+
+デザインパターン（design pattern）とは、頻繁にテストされ、
+採用されるソフトウェア設計の中でよく発生する問題に対して再利用可能な解決策のことを指します。
+これらは、ソフトウェアを構築する際に開発・識別された抽象化に対するラベルのようなものであり、
+言語ライブラリやフレームワークで一般的に提供・採用されています。
+
+これらの一つに、デコレータパターン（decorator pattern）というものがあります。
+特定のオブジェクトに動的に機能を変更したり追加したりするものをデコレータ（decorator）と呼びます。
+
+では、デコレータを使って呼び出し可能オブジェクトに機能を追加していきます。
+今回のケースでは、デコレータは関数になります。
+この関数は関数を取り込み、その関数に新しい機能を追加します。
+
+簡単な例を使って、これを試してみましょう。
+零項関数（入力を受け取らない関数）f を取り込み、
+f を実行する前に "runing f..." を表示する新しい関数（新しい機能が追加された関数 f）を返します。
+
+'''
+
+def simpleDecorator(f):
+   def inner():
+      print("Running f......")
+      return f()
+   return inner()
+
+def helloWorld():
+   return "Hello world"
+
+newFunc1 = simpleDecorator(helloWorld)
+print(newFunc1)
+
+newFunc2 = simpleDecorator(lambda : "Hello Jupiter")
+print(newFunc2)
+
+print(newFunc2)
+
+'''
+
+単項関数（1 つの引数を取る関数）の実行時間を倍にするデコレータを追加してみましょう。
+
+'''
+
+# 単項関数（unary function）fを受け取り、新しい機能が追加された関数fを返します。実行するたびにタイマーを使用し、fの実行時間がどれぐらいかを計算します。
+import datetime
+
+def timerDecorator(f):
+    def function(arg):
+        start = datetime.datetime.now()
+        #    print(start)
+        result = f(arg)
+        end = datetime.datetime.now()
+        print("This function took: " + str(end-start) + "ms")
+        return result
+    return function
+
+# O(1)
+print(timerDecorator(lambda x: x*2)(2424))
+
+# O(n^2)
+def on2func(x):
+    finalResult = 1
+    for i in range(x):
+        result = i
+        for j in range(i):
+            result += j
+        finalResult += result
+    return finalResult
+
+print(timerDecorator(on2func)(10000))
+
+# O(2^n)
+def fibonacci(n):
+    if n <= 0: return 0
+    if n == 1: return 1
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# O(n)
+def fibonacciFast(fib1,fib2,n):
+    if n <= 0: return fib1
+    return fibonacciFast(fib2,fib1+fib2,n-1)
+
+timedFibonacci = timerDecorator(fibonacci)
+print(timedFibonacci(20))
+
+timedFibonacciFast = timerDecorator(lambda n: fibonacciFast(0,1,n))
+print(timedFibonacciFast(20))
+
+'''
+
+このように、任意の関数に追加機能を追加することは非常に便利です。
+
+
+非同期関数
+先ほど説明したように、同期型コールバックとは、f によって呼び出され、
+f が結果を返す前に実行されるコールバックのことです。
+
+一方、非同期型コールバックとは、f によって呼び出され、
+f が終了しデータを返した後でも、処理が終了していないコールバックのことです。
+お分かりのように、これはコールバックが他のスレッド（thread）で実行されるように制御フローを分割します。
+言語やライブラリによって、コードを他スレッドで実行するための関数が提供されています。
+
+同期コールバックは単一スレッド
+非同期コールバックは複数スレッド
+
+では、非同期コールバックを使って、関数を並行して実行してみましょう。
+非同期型コールバックは、呼び出された関数 f の実行が終了した後でも、
+まだ実行の途中で終了していないことに注意してください。
+関数 f はコールバックの処理が終了するまで待ちません。
+
+古典的な非同期型コールバックの使い方は、一定の時間が経過した後に関数を呼び出すことです。
+ライブラリのタイマーや言語のインターバル関数を使うことによって、これを実装することができます。
+繰り返しになりますが、関数のデータが最初に返され、その後に非同期型コールバックが実行されることに注意してください。
+
+'''
+
+from threading import Timer
+# threading.Timerを使います。
+
+def runAfterXMs(f,s):
+   # PythonのTimer関数はコールバックを受け取り、xミリ秒後に実行します。この関数は非同期関数です。この関数はコールバックをどこか別の場所に送り、残りの関数が実行を終了する間に実行します。
+   print("running the function.....")
+   Timer(s, f).start()
+
+   return "This function has finished...."
+
+
+# 1秒後にコールバックを実行します。
+print(runAfterXMs(lambda : print("Hello World!!!!"), 1))
+
+'''
+
+お気づきのように、runAfterXMs は実行を終了し、
+渡されたコールバックが実行を終了する前に結果を返しました。
+
+非同期関数の問題点の一つは、input -> output の方法で実行される関数の制御ができなくなってしまうことです。
+データの流れがわからなくなると、コードの実行が複雑になります。
+この場合、情報や計算を受け取る 1 つの方法は、コールバックのスコープ外の状態を更新することがありますが、
+これは副作用を引き起こす可能性があります。
+
+他にも、非同期呼び出しがいつ実行を終了したかを他のモジュールとやりとりする方法があります。
+
+'''
+from threading import Timer
+
+def runAfterXMs(f,s):
+   print("running the function.....")
+   Timer(s, f).start()
+   return "This function has finished...."
+
+x = 5;
+
+# 関数が終わったことをどうやって把握すればよいでしょうか？データの流れを制御できなくなってしまったので、コールバックの戻り値を取得することはできません。
+print(runAfterXMs(lambda : x*40, 1))
+
+# グローバルへアクセス
+results = None
+
+# コールバック関数の外でアクセスして状態を変更すると、副作用が発生する可能性があります。
+def accessGlobal():
+    global results
+    results = x*40
+print(runAfterXMs(accessGlobal, 1))
+
+# Noneを出力します。
+print(results)
+
+# 少し待つと、結果を出力することができます。
+Timer(4, lambda : print(results)).start()
+'''
+
+処理が同期していない状態で実行されると、コードは非常に乱雑になり、
+すぐに制御不能に陥ることがあります。
+これは並行計算（concurrent computing）と呼ばれ、
+言語、ライブラリ、およびオペレーティング・システムは、
+メモリ内の状態の共有、アクセス、および書き込みを
+管理、制御するためのツールを開発者に提供しています。
+
+これには、
+スレッドセーフ（thread-safe）、
+ミューテックス（Mutex）、
+セマフォロック（semaphore locking）、
+コンポーネント間のメッセージ渡し
+などの概念が含まれます。
+並行計算に関しては独自のコースで学習します。
+
+並行処理
+タスクA: --->    --->    --->    --->
+タスクB:     --->    --->    --->    --->
+
+コールバックが終わった後にやりとりをしたり、
+さらに多くのコードを実行したりするための解決策としては、
+処理を実行するコールバックにさらに別のコールバックを渡して、
+プログラムの残りの部分に終了したことを知らせるだけでなく、
+結果を出力したり、レンディングなど作業を伴う場合があります。
+
+'''
+
+from threading import Timer
+
+# このデコレータは、関数を拡張して実行し、結果を返さずにその結果をコールバックに渡すようにします。
+def finishCallbackDecorator(f, arg, callback):
+    def func():
+        result = f(arg)
+        callback(result)
+    return func
+
+
+
+def runAfterXMs(f,s):
+    print("running the function.....")
+    Timer(s, f).start()
+    return "This function has finished...."
+
+def myCallback(result):
+    print("The function has finished running!!")
+    print("The callback result is: " + str(result))
+
+myFunc = finishCallbackDecorator(lambda x: x*40, 5, myCallback)
+
+print(runAfterXMs(myFunc, 1))
+
+'''
+
+ライブラリ関数が非同期関数を使用していて、
+それを強制的に同期化したい場合、
+言語によっては、async/await キーワードのような方法を提供している場合もあります。
+
+まとめ
+関数 F が関数 C を入力として受け取り、F が実行中のどこかで C を呼び出す場合、C はコールバック関数と呼ばれる。
+
+関数 F 内の最初の命令から最後の命令までのどこかで関数 C が呼び出され、
+必ず C の呼び出しが F の戻り値が返される前に終了する場合、
+C は同期型コールバックと呼ばれ、
+関数 F が終了し、データを返した後でも C がまだ終了していない場合、
+C は非同期型コールバックと呼ばれる。
+
+リストと関数 F を受け取り、
+同じ順序でそれぞれのリスト項目に対して、F を適用し、
+生成した新しいリストを出力として返す、高階関数を map という。
+
+述語関数とリストを受け取り、
+同じ順序でそれぞれのリスト項目に対して述語を実行して、
+どれを削除するかを決定する、高階関数を filter という。
+
+リスト、コールバック、初期値を受け取り、
+各リスト要素にコールバックを反復的に適用し、
+最終的に 1 つの値に評価する、高階関数を reduce という。
+
+ラムダ式によって作成された、変数の状態をラムダのスコープにバインドする
+ステートフル関数のことをラムダクロージャーという。
+
+参照のみをコピーすることをシャローコピーといい、
+オブジェクトの完全なコピーを行うことはディープコピーという。
+
+特定のオブジェクトに動的に機能を変更したり追加したりするものをデコレータという。
