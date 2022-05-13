@@ -1,0 +1,164 @@
+不変文字列
+オブジェクトを不変にする理由は、安全性のためです。
+つまり、
+データを突然変異から保護したり、
+副作用を気にせずに他のモジュールにオブジェクトを渡したり、
+複数のスレッドやコンピュータがデータにアクセスしてデータが読み取り専用であることを保証したり
+するためです。
+
+そのため、不変オブジェクトは、
+多くのモジュールや処理が共有メモリリソースにアクセスしている際、
+状態の変化をデバッグするのが困難な、
+高い安全性が必要となるプロジェクトや
+並行プログラミングでよく使われています。
+
+さらに、言語によっては、
+デフォルトのデータ構造が不変として設定されている場合があります。
+その例として、文字列があります。
+ほとんどの言語では、
+実際には文字列を不変オブジェクトとして設定しています。
+
+文字列をロックすると安全性は高くなります。
+しかし、仮に文字列が不変の場合、
+他の操作の中で連結 (+) 演算子を
+使うべきかどうかにも注意が必要になります。
+
+2 つの文字列を連結するとき、その状態は不変なので、
+両方の文字列を新しい文字列にコピーする必要があります。
+例えば、片方の文字列が 20,000 文字のような巨大サイズで、
+それに対して "hi" という文字列が連結された場合、
+新しいコピーをしなければならないので、
+この時間計算量は 2 ではなく、
+20,002 ステップ必要になることになります。
+連結の時間計算量は (s1.length + s2.length) で、
+最悪の場合は O(n) の処理になります。
+
+
+ほとんどの文字列リテラルのようなサイズの小さな文字列では問題ありませんが、
+長さが数十万文字にもなるようなテキストを扱う場合は、
+この概念を念頭に置いておく必要があります。
+このような場合、文字配列を連結処理に使用し、
+処理の最後に最終的な文字列に変換することで、
+時間効率を高めることができます。
+
+一方、文字列リテラル "hello" はソースコード内に何千回と現れるかもしれません。
+これらは不変なので、
+コンパイラ/インタプリタはこれらの "hello" リテラルをすべて一つのメモリアドレスに格納し、
+それらを共有することによって、
+メモリを節約することができます。
+
+それでは String オブジェクトを見てみましょう。
+
+'''Java
+class Main{
+    public static void printChars(char[] charArr){
+        System.out.print("Printing character array: ");
+        for(int i = 0; i < charArr.length; i++) System.out.print(charArr[i]);
+        System.out.println();
+    }
+
+    public static void main(String[] args){
+        char[] str1Chars = new char[]{'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!'};
+        printChars(str1Chars);
+
+        // 文字の配列の状態を変更することができます。
+
+        str1Chars[6] = 'E';
+        str1Chars[7] = 'a';
+        str1Chars[8] = 'r';
+        str1Chars[9] = 't';
+        str1Chars[10] = 'h';
+        printChars(str1Chars);
+
+        // 文字の配列の文字列を作成することができます。
+        String s1 = new String(str1Chars);
+
+        // Stringオブジェクト型の状態を変更することはできません。
+        // ERROR
+        // s1[3] = 'e';
+        // Stringオブジェクトの状態を変更するミューテータメソッドは存在しません。不変性。
+
+        // 文字列を比較してみましょう。
+        System.out.println();
+        System.out.println("Comparing strings....");
+        String s2 = new String(str1Chars);
+
+        String s3 = "Hello World!";
+        String s4 = "Hello World!";
+        String s5 = new String("Hello World!");
+
+
+        //Note that java may do some optimizations like assign string literals to the same location, or strings that it can guarantee to be the same to a similar location. It can only do this due to  immutability.
+        //javaは、文字列リテラルを同じ場所に割り当てたり、同じであることが保証できる文字列を似た場所に割り当てるなどの最適化を行うことがあることに注意してください。これは、不変性によってのみ可能なことです。
+        System.out.println(System.identityHashCode(s1));
+        System.out.println(System.identityHashCode(s2));
+
+        //On concatination, a completely new string object is made.
+        //連結することで、全く新しい文字列オブジェクトが作られる。
+        System.out.println(System.identityHashCode((s1+s2)));
+        System.out.println(System.identityHashCode(s3));
+
+        //Even though they are the same strings, == by default does a reference comparison in Java to determine equality. The equals method on the other hand does a comparison of state to determine equality.
+        //同じ文字列であっても、Javaではデフォルトで==は参照比較を行い、等質性を判断しています。一方、equalsメソッドは状態の比較を行い、等質性を判断します。
+        System.out.println(s1 == s2);//False
+        System.out.println(s1.equals(s2));//True
+        System.out.println(s3 == s4);//True
+        System.out.println(s4 == s5);//False
+        System.out.println(s5 == s5);//True
+
+        System.out.println();
+        System.out.println("Doing operations....");
+
+        // ループ自体に連結演算がある場合、つまり =, += のような場合は、不変の配列ではなく文字配列を使用する方が良いでしょう。
+
+        // 文字列の反転 O(n^2)
+        String reverseS = "";
+        for(int i = s5.length()-1; i >= 0; i--){
+            // O(n)
+            reverseS += s5.charAt(i);
+        }
+        System.out.println(s5);
+        System.out.println(reverseS);
+
+        // 文字の配列の使用
+        // 文字列の反転 O(n)
+        char[] reverseChar = new char[s5.length()];
+        int l = s5.length()-1;
+        for(int i = l; i >= 0; i--){
+            // O(1)
+            reverseChar[l-i] = s5.charAt(i);
+        }
+
+        String reverseS2 = new String(reverseChar);
+        System.out.println(reverseS2);
+        System.out.println(reverseS2.equals(reverseS));//true
+    }
+}
+'''
+
+不変文字列を持つ言語でも、
+可変文字列型を提供している場合もあります。
+しかし、連結、toString、部分文字列、等号などの操作を持つ
+文字の動的配列のコンテナを作成するように
+簡単に独自のデータ構造を作成することができます。
+
+では、以下のエディタで、
+ミューテータを含む mutableString データ構造体を実装してください。
+API（契約書）は以下の通りです。
+関数のオーバーロードを活用し、
+動的言語の場合は型チェックを行ってください。
+
+
+Append(Char c): // 文字を文字列に挿入します。
+substring(int start): // 文字列のインデックス start から最後までの部分文字列を持つ、mutableString オブジェクトを返します。
+substring(int startIndex, int endIndex): // 文字列のインデックス startIndex から endIndex までを持つ、mutableStringオブジェクトを返します。
+concat(char[] cArr): // 文字列 S を文字配列 cArr で連結し、mutableStringは S = S + cArr となります。
+concat(String stringInput): // 文字列 S を文字列 stringInput と連結し、mutableString は S = S + stringInput となります。
+concat(mutableString stringInput): // 文字列 S を mutableString stringInput と連結し、mutableString は S = S + stringInput となります。
+length(): 文字列の長さを返します。
+
+'''Java
+未実装
+'''
+
+
